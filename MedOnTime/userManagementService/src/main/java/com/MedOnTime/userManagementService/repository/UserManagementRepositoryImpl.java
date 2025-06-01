@@ -32,7 +32,7 @@ public class UserManagementRepositoryImpl implements UserManagementRepository{
         }
 
         // Current timestamp
-        String now = LocalDateTime.now().toString();
+        LocalDateTime now = LocalDateTime.now();
 
         Query query = entityManager.createNativeQuery(
                 "INSERT INTO user_table " +
@@ -52,6 +52,4 @@ public class UserManagementRepositoryImpl implements UserManagementRepository{
 
         return "User registered successfully";
     }
-
-
 }
