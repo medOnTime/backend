@@ -17,7 +17,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
 
     @Override
     public MedicineDTO getMedicineDetailById(int medicineId){
-        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description from medicines where medicine_id = :medicineId", MedicineDTO.class);
+        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description,type from medicines where medicine_id = :medicineId", MedicineDTO.class);
         query.setParameter("medicineId", medicineId);
 
         MedicineDTO medicineDTO = (MedicineDTO) query.getSingleResult();
@@ -62,7 +62,11 @@ public class MedicineRepositoryImpl implements MedicineRepository{
     @Override
     public List<HashMap<String, String>> getMedicineInventoryByUser(int userId) {
         Query query = entityManager.createNativeQuery(
-                "SELECT inventry_id, medicine_id, quantity, start_date, end_date FROM medicine_inventry WHERE user_id = :userId",
+                "SELECT i.inventry_id, i.medicine_id, i.quantity, i.start_date, i.end_date, " +
+                        "m.medicine_name, m.description, m.type " +
+                        "FROM medicine_inventry i " +
+                        "JOIN medicines m ON i.medicine_id = m.medicine_id " +
+                        "WHERE i.user_id = :userId",
                 Tuple.class
         );
         query.setParameter("userId", userId);
@@ -71,17 +75,20 @@ public class MedicineRepositoryImpl implements MedicineRepository{
         List<HashMap<String, String>> inventoryList = new ArrayList<>();
 
         if (tupleList == null || tupleList.isEmpty()) {
-            return inventoryList; // returns empty list if no results
+            return inventoryList;
         }
 
         for (Tuple tuple : tupleList) {
             HashMap<String, String> inventory = new HashMap<>();
 
-            inventory.put("inventoryId", tuple.get("inventry_id") == null ? null : tuple.get("inventry_id").toString());
-            inventory.put("medicineId", tuple.get("medicine_id") == null ? null : tuple.get("medicine_id").toString());
-            inventory.put("quantity", tuple.get("quantity") == null ? null : tuple.get("quantity").toString());
-            inventory.put("startDate", tuple.get("start_date") == null ? null : tuple.get("start_date").toString());
-            inventory.put("endDate", tuple.get("end_date") == null ? null : tuple.get("end_date").toString());
+            inventory.put("inventoryId", tuple.get("inventry_id") != null ? tuple.get("inventry_id").toString() : null);
+            inventory.put("medicineId", tuple.get("medicine_id") != null ? tuple.get("medicine_id").toString() : null);
+            inventory.put("quantity", tuple.get("quantity") != null ? tuple.get("quantity").toString() : null);
+            inventory.put("startDate", tuple.get("start_date") != null ? tuple.get("start_date").toString() : null);
+            inventory.put("endDate", tuple.get("end_date") != null ? tuple.get("end_date").toString() : null);
+            inventory.put("medicineName", tuple.get("medicine_name") != null ? tuple.get("medicine_name").toString() : null);
+            inventory.put("description", tuple.get("description") != null ? tuple.get("description").toString() : null);
+            inventory.put("type", tuple.get("type") != null ? tuple.get("type").toString() : null);
 
             inventoryList.add(inventory);
         }
@@ -89,12 +96,16 @@ public class MedicineRepositoryImpl implements MedicineRepository{
         return inventoryList;
     }
 
+
     @Override
     public HashMap<String, String> getMedicineInventoryByUserIdAndMedicineID(int userId, int medicineId) {
         try {
             Query query = entityManager.createNativeQuery(
-                    "SELECT inventry_id, medicine_id, quantity, start_date, end_date " +
-                            "FROM medicine_inventry WHERE user_id = :userId AND medicine_id = :medicineId",
+                    "SELECT i.inventry_id, i.medicine_id, i.quantity, i.start_date, i.end_date, " +
+                            "m.medicine_name, m.description, m.type " +
+                            "FROM medicine_inventry i " +
+                            "JOIN medicines m ON i.medicine_id = m.medicine_id " +
+                            "WHERE i.user_id = :userId AND i.medicine_id = :medicineId",
                     Tuple.class
             );
             query.setParameter("userId", userId);
@@ -103,19 +114,22 @@ public class MedicineRepositoryImpl implements MedicineRepository{
             Tuple tuple = (Tuple) query.getSingleResult();
 
             HashMap<String, String> inventory = new HashMap<>();
-            inventory.put("inventoryId", tuple.get("inventry_id") == null ? null : tuple.get("inventry_id").toString());
-            inventory.put("medicineId", tuple.get("medicine_id") == null ? null : tuple.get("medicine_id").toString());
-            inventory.put("quantity", tuple.get("quantity") == null ? null : tuple.get("quantity").toString());
-            inventory.put("startDate", tuple.get("start_date") == null ? null : tuple.get("start_date").toString());
-            inventory.put("endDate", tuple.get("end_date") == null ? null : tuple.get("end_date").toString());
+            inventory.put("inventoryId", tuple.get("inventry_id") != null ? tuple.get("inventry_id").toString() : null);
+            inventory.put("medicineId", tuple.get("medicine_id") != null ? tuple.get("medicine_id").toString() : null);
+            inventory.put("quantity", tuple.get("quantity") != null ? tuple.get("quantity").toString() : null);
+            inventory.put("startDate", tuple.get("start_date") != null ? tuple.get("start_date").toString() : null);
+            inventory.put("endDate", tuple.get("end_date") != null ? tuple.get("end_date").toString() : null);
+            inventory.put("medicineName", tuple.get("medicine_name") != null ? tuple.get("medicine_name").toString() : null);
+            inventory.put("description", tuple.get("description") != null ? tuple.get("description").toString() : null);
+            inventory.put("type", tuple.get("type") != null ? tuple.get("type").toString() : null);
 
             return inventory;
 
         } catch (NoResultException e) {
-            // Return empty map if no result found
-            return new HashMap<>();
+            return new HashMap<>(); // return empty if not found
         }
     }
+
 
     @Override
     @Transactional
