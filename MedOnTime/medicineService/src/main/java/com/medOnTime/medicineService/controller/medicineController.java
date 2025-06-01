@@ -16,13 +16,28 @@ public class medicineController {
     @Autowired
     private MedicineService medicineService;
 
+    @GetMapping("/getMedicineById")
+    public MedicineDTO getMedicineById(@RequestParam(value = "medicineId") String medicineId){
+        return medicineService.getMedicineDetailById(medicineId);
+    }
+
     @GetMapping("/getAllMedicines")
     public List<MedicineDTO> getAllMedicines(){
         return medicineService.getAllMedicines();
     }
 
     @PostMapping("addMedicineToInventry")
-    public String addMedicineToInventry(@RequestBody HashMap<String,String> addedMedicineDetails){
-        return null;
+    public String addMedicineToInventry(@RequestBody HashMap<String,String> addedMedicineDetails) throws Exception {
+        return medicineService.addMedicineToInventry(addedMedicineDetails);
+    }
+
+    @PostMapping("/getMedicineInventoryByUser")
+    public List<HashMap<String,String>> getMedicineInventoryByUser(@RequestBody String userId){
+        return medicineService.getMedicineInventoryByUser(userId);
+    }
+
+    @PostMapping("/updateInventory")
+    public String updateInventory(@RequestBody HashMap<String,String> updatedData){
+        return medicineService.updateInventory(updatedData);
     }
 }

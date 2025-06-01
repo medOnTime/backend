@@ -7,8 +7,14 @@ import java.util.List;
 
 public interface MedicineService {
 
+    MedicineDTO getMedicineDetailById(String medicineId);
+
     List<MedicineDTO> getAllMedicines();
 
-    String addMedicineToInventry(HashMap<String,String> addedMedicine);
+    String addMedicineToInventry(HashMap<String,String> addedMedicine) throws Exception;
+
+    List<HashMap<String,String>> getMedicineInventoryByUser(String userId);
+
+    String updateInventory(HashMap<String,String> updatedData);
 
 }
