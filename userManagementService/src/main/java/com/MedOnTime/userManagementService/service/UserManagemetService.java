@@ -8,4 +8,8 @@ public interface UserManagemetService {
 
     String userRegistration(UserDTO userDetails);
 
+    boolean checkUserByEmail(String email);
+
+    UserDTO getUserDetailsByEmail(String email);
+
 }

@@ -27,4 +27,14 @@ public class UserManagementServiceImpl implements UserManagemetService{
 
         return userManagementRepository.registerUser(userDTOWithHashedPassword);
     }
+
+    @Override
+    public boolean checkUserByEmail(String email){
+        return userManagementRepository.checkUserByEmail(email);
+    }
+
+    @Override
+    public UserDTO getUserDetailsByEmail(String email){
+        return userManagementRepository.getUserDetailsByEmail(email);
+    }
 }
