@@ -10,7 +10,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("medicine_service")
+@RequestMapping("medicine")
 public class medicineController {
 
     @Autowired
