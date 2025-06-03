@@ -69,13 +69,14 @@ public class UserManagementRepositoryImpl implements UserManagementRepository{
     public UserDTO getUserDetailsByEmail(String email) {
         try {
             Tuple tuple = (Tuple) entityManager.createNativeQuery(
-                            "SELECT user_name, user_email, password, phone_number, role, pharmacy_id " +
+                            "SELECT user_id, user_name, user_email, password, phone_number, role, pharmacy_id " +
                                     "FROM user_table WHERE user_email = :email", Tuple.class)
                     .setParameter("email", email)
                     .getSingleResult();
 
             UserDTO userDTO = new UserDTO();
 
+            userDTO.setUserId(tuple.get("user_id") == null ? null : tuple.get("user_id").toString());
             userDTO.setUserName(tuple.get("user_name") == null ? null : tuple.get("user_name").toString());
             userDTO.setEmail(tuple.get("user_email") == null ? null : tuple.get("user_email").toString());
             userDTO.setPassword(tuple.get("password") == null ? null : tuple.get("password").toString());
