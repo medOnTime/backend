@@ -37,4 +37,19 @@ public class UserManagementServiceImpl implements UserManagemetService{
     public UserDTO getUserDetailsByEmail(String email){
         return userManagementRepository.getUserDetailsByEmail(email);
     }
+
+    @Override
+    public UserDTO getUserDetailsById(String userId){
+        return userManagementRepository.getUserDetailsByUserId(Integer.parseInt(userId));
+    }
+
+    @Override
+    public String updateUser(String userId, UserDTO UpdateUserDetails) throws Exception {
+
+        UserDTO userDTOWithHashedPassword = UpdateUserDetails;
+
+        userDTOWithHashedPassword.setPassword(passwordEncoder.encode(UpdateUserDetails.getPassword()));
+
+        return userManagementRepository.updateUser(Integer.parseInt(userId), userDTOWithHashedPassword);
+    }
 }
