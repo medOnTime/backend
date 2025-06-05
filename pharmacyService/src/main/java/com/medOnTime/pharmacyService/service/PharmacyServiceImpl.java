@@ -1,24 +1,19 @@
 package com.medOnTime.pharmacyService.service;
 
+import com.medOnTime.pharmacyService.dto.PharmacyDTO;
 import com.medOnTime.pharmacyService.repo.PharmacyRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
 import java.util.HashMap;
-import java.util.UUID;
+import java.util.List;
 
 @Service
 public class PharmacyServiceImpl implements PharmacyService {
 
-    private static final Logger logger = LoggerFactory.getLogger(PharmacyServiceImpl.class);
 
     @Autowired
     private PharmacyRepository pharmacyRepository;
@@ -60,6 +55,11 @@ public class PharmacyServiceImpl implements PharmacyService {
         } catch (IOException e) {
             return "Failed to upload certificate.";
         }
+    }
+
+    @Override
+    public List<PharmacyDTO> getAllPharmacies(){
+        return pharmacyRepository.getAllPharmacies();
     }
 
 }

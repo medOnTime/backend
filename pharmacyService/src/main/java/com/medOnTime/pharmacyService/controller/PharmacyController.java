@@ -1,11 +1,13 @@
 package com.medOnTime.pharmacyService.controller;
 
+import com.medOnTime.pharmacyService.dto.PharmacyDTO;
 import com.medOnTime.pharmacyService.service.PharmacyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
+import java.util.List;
+
 
 @RestController
 @RequestMapping("pharmacy")
@@ -27,7 +29,9 @@ public class PharmacyController {
                 certificateNumber, certifiedDate, certificateFile);
     }
 
-    @GetMapping("/getAllPharmacies")
-    public
+    @GetMapping("/get-all-pharmacies")
+    public List<PharmacyDTO> getAllPharmacies(){
+        return pharmacyService.getAllPharmacies();
+    }
 
 }

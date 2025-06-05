@@ -1,18 +1,25 @@
 package com.medOnTime.pharmacyService.repo;
 
+import com.medOnTime.pharmacyService.dto.PharmacyDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
+import java.util.List;
 
 @Repository
 public class PharmacyRepositoryImpl implements PharmacyRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public boolean existsByCertificateNumber(String certificateNumber) {
@@ -21,6 +28,25 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
         Number count = (Number) checkQuery.getSingleResult();
         return count.intValue() > 0;
     }
+
+
+
+    public List<PharmacyDTO> getAllPharmacies() {
+        String sql = "SELECT id, name, address, contact_number, certification_code, certified_date, file_path FROM pharmacies";
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            PharmacyDTO dto = new PharmacyDTO();
+            dto.setId(rs.getInt("id"));
+            dto.setName(rs.getString("name"));
+            dto.setAddress(rs.getString("address"));
+            dto.setContactNumber(rs.getString("contact_number"));
+            dto.setCertificationCode(rs.getString("certification_code"));
+            dto.setCertifiedDate(rs.getString("certified_date"));
+            dto.setFilePath(rs.getString("file_path"));
+            return dto;
+        });
+    }
+
 
     @Override
     @Transactional

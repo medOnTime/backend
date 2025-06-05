@@ -1,9 +1,10 @@
 package com.medOnTime.pharmacyService.service;
 
+import com.medOnTime.pharmacyService.dto.PharmacyDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.List;
 
 public interface PharmacyService {
 
@@ -11,4 +12,5 @@ public interface PharmacyService {
                                String certificateNumber, String certifiedDate,
                                MultipartFile certificateFile) throws IOException;
 
+    List<PharmacyDTO> getAllPharmacies();
 }
