@@ -28,7 +28,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
     @Override
     public List<MedicineDTO> getAllMedicines(){
 
-        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description from medicines", MedicineDTO.class);
+        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description, type from medicines", MedicineDTO.class);
 
         List<MedicineDTO> medicineDTOS = query.getResultList();
 
