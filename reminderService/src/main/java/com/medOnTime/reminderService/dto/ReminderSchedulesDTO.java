@@ -13,5 +13,5 @@ public class ReminderSchedulesDTO {
     private LocalDateTime scheduleDateAndTime;
     private ScheduleStatus status;
     private LocalDateTime takenDateAndTime;
-
+    private Integer dosage;
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ReminderScheduleServiceImpl implements ReminderScheduleService{
@@ -20,42 +21,64 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
     @Override
     @Transactional
     public String addReminder(ReminderDTO reminderDTO) throws Exception {
-        if (reminderDTO.getStartDate() == null || reminderDTO.getNumberOfDays() == null || reminderDTO.getHours() == null) {
-            throw new Exception("Start date, number of days, and hours are required.");
+        if (reminderDTO.getStartDate() == null || reminderDTO.getNumberOfDays() == 0 || reminderDTO.getDosageList() == null) {
+            throw new Exception("Start date, number of days, and dosage list are required.");
+        }
+
+        if (reminderDTO.getDosageList().size() != reminderDTO.getTimesPerDay()) {
+            throw new Exception("Dosage list size must match times per day.");
         }
 
         // Calculate end date
-        LocalDateTime endDate = reminderDTO.getStartDate().plusDays(reminderDTO.getNumberOfDays());
+        LocalDateTime endDate = reminderDTO.getStartDate().plusDays(reminderDTO.getNumberOfDays() - 1);
         reminderDTO.setEndDate(endDate);
 
+        // Check if already exists
         if (reminderServiceRepository.getReminderId(reminderDTO) != null){
             throw new Exception("This reminder is already added");
         }
 
+        String dosageString = reminderDTO.getDosageList().stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        reminderDTO.setDosageString(dosageString);
+
         // Save reminder
         String message = reminderServiceRepository.addReminder(reminderDTO);
 
-        // Generate schedule list
-        List<ReminderSchedulesDTO> schedules = new ArrayList<>();
-        LocalDateTime current = reminderDTO.getStartDate();
-
+        // Get inserted reminder ID
         String reminderId = reminderServiceRepository.getReminderId(reminderDTO);
 
-        while (!current.isAfter(endDate)) {
-            ReminderSchedulesDTO schedule = new ReminderSchedulesDTO();
-            schedule.setReminderId(reminderId);
-            schedule.setScheduleDateAndTime(current);
-            schedule.setStatus(ScheduleStatus.PENDING);
-            schedule.setTakenDateAndTime(null);
+        // Prepare schedules
+        List<ReminderSchedulesDTO> schedules = new ArrayList<>();
+        int intervalHours = 24 / reminderDTO.getTimesPerDay();
 
-            schedules.add(schedule);
-            current = current.plusHours(reminderDTO.getHours());
+        LocalDateTime baseTime = reminderDTO.getStartDate(); // this already has both date and time
+
+        for (int day = 0; day < reminderDTO.getNumberOfDays(); day++) {
+            for (int time = 0; time < reminderDTO.getTimesPerDay(); time++) {
+                ReminderSchedulesDTO schedule = new ReminderSchedulesDTO();
+
+                LocalDateTime scheduledTime = baseTime
+                        .plusDays(day)
+                        .plusHours(time * intervalHours);
+
+                schedule.setReminderId(reminderId);
+                schedule.setScheduleDateAndTime(scheduledTime);
+                schedule.setDosage(reminderDTO.getDosageList().get(time));
+                schedule.setStatus(ScheduleStatus.PENDING);
+                schedule.setTakenDateAndTime(null);
+
+                schedules.add(schedule);
+            }
         }
 
-        schedules.forEach(s -> reminderServiceRepository.addSchedule(s));
+
+        schedules.forEach(reminderServiceRepository::addSchedule);
 
         return "Reminder added with " + schedules.size() + " schedules.";
     }
+
 
 
 }

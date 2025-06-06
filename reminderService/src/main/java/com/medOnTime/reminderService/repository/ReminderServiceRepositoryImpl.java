@@ -26,23 +26,29 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     @Override
     @Transactional
     public String addReminder(ReminderDTO reminderDTO) {
+        Query query = entityManager.createNativeQuery(
+                "INSERT INTO reminders " +
+                        "(user_id, medicine_id, dosage, times_per_day, start_date, end_date, number_of_days, medicine_name, medicine_type, strength) " +
+                        "VALUES (:userId, :medicineId, :dosage, :timesPerDay, :startDate, :endDate, :numberOfDays, :medicineName, :medicineType, :strength)"
+        );
 
-        Query query = entityManager.createNativeQuery("INSERT INTO reminders " +
-                " (user_id,medicine_id,dosage,hours,start_date,end_date,number_of_days,medicine_name,medicine_type) VALUES  " +
-                " (:userId, :medicineId, :dosage, :hours, :startDate, :endDate, :numberOfDays, :medicineName, :medicineType) ");
-        query.setParameter("userId", Integer.parseInt(reminderDTO.getUserId()));
-        query.setParameter("medicineId", Integer.parseInt(reminderDTO.getMedicineId()));
-        query.setParameter("dosage", Integer.parseInt(reminderDTO.getDosage()));
-        query.setParameter("hours", reminderDTO.getHours());
+        query.setParameter("userId", reminderDTO.getUserId());
+        query.setParameter("medicineId", reminderDTO.getMedicineId());
+        query.setParameter("dosage", reminderDTO.getDosageString()); // <-- pass as string
+        query.setParameter("timesPerDay", reminderDTO.getTimesPerDay());
         query.setParameter("startDate", reminderDTO.getStartDate());
         query.setParameter("endDate", reminderDTO.getEndDate());
         query.setParameter("numberOfDays", reminderDTO.getNumberOfDays());
         query.setParameter("medicineName", reminderDTO.getMedicineName());
         query.setParameter("medicineType", reminderDTO.getMedicineType());
+        query.setParameter("strength", reminderDTO.getStrength());
+
         query.executeUpdate();
 
         return "Reminder successfully added";
     }
+
+
 
     @Override
     public String getReminderId(ReminderDTO reminderDTO) {
@@ -70,17 +76,19 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     @Transactional
     public void addSchedule(ReminderSchedulesDTO reminderSchedulesDTO) {
         Query query = entityManager.createNativeQuery(
-                "INSERT INTO reminder_scheduler (reminder_id, scheduled_time, status, taken_time) " +
-                        "VALUES (:reminderId, :scheduledTime, :status, :takenTime)"
+                "INSERT INTO reminder_scheduler (reminder_id, scheduled_time, status, taken_time, dosage) " +
+                        "VALUES (:reminderId, :scheduledTime, :status, :takenTime, :dosage)"
         );
 
-        query.setParameter("reminderId", reminderSchedulesDTO.getReminderId());
+        query.setParameter("reminderId", Integer.parseInt(reminderSchedulesDTO.getReminderId()));
         query.setParameter("scheduledTime", reminderSchedulesDTO.getScheduleDateAndTime());
         query.setParameter("status", reminderSchedulesDTO.getStatus().toString());
         query.setParameter("takenTime", reminderSchedulesDTO.getTakenDateAndTime());
+        query.setParameter("dosage", reminderSchedulesDTO.getDosage());
 
         query.executeUpdate();
     }
+
 
     @Override
     public List<Map<String, String>> getScheduledReminderDetailsByUserAndStatus(Integer userId, @Nullable String status) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class ReminderDTO {
@@ -13,15 +14,16 @@ public class ReminderDTO {
     private String medicineId;
     private String medicineName;
     private String medicineType;
-    private String dosage;
-    private Integer hours;
+    private String strength;
+    private Integer timesPerDay;
+    private List<Integer> dosageList;
+    private String dosageString;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startDate;
 
-    private Integer numberOfDays;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDate;
+    private Integer numberOfDays;
 }
 
