@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -32,6 +33,11 @@ public class PharmacyController {
     @GetMapping("/get-all-pharmacies")
     public List<PharmacyDTO> getAllPharmacies(){
         return pharmacyService.getAllPharmacies();
+    }
+
+    @PostMapping("/get-pharmacy-by-id")
+    public List<HashMap<String,String>> getPharmacyById(@RequestBody String id){
+        return pharmacyService.getPharmacyById(id);
     }
 
 }

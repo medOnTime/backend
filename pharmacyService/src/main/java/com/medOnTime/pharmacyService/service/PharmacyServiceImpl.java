@@ -62,4 +62,9 @@ public class PharmacyServiceImpl implements PharmacyService {
         return pharmacyRepository.getAllPharmacies();
     }
 
+    @Override
+    public List<HashMap<String, String>> getPharmacyById(String id) {
+        return pharmacyRepository.getPharmacyById(Integer.parseInt(id));
+    }
+
 }

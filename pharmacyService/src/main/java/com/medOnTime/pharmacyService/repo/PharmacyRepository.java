@@ -11,4 +11,6 @@ public interface PharmacyRepository {
     boolean existsByCertificateNumber(String certificateNumber);
 
     List<PharmacyDTO> getAllPharmacies();
+
+    List<HashMap<String, String>> getPharmacyById(int i);
 }
