@@ -13,5 +13,6 @@ public class MedicineDTO {
     private String medicine_name;
     private String description;
     private String type;
+    private  String strength;
 
 }
