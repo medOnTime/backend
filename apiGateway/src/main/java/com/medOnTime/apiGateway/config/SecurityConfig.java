@@ -37,9 +37,11 @@ public class SecurityConfig {
             if (CorsUtils.isCorsRequest(request)) {
                 ServerHttpResponse response = ctx.getResponse();
                 HttpHeaders headers = response.getHeaders();
-                headers.add("Access-Control-Allow-Origin", "*"); // Or specify http://localhost:3000
+                headers.add("Access-Control-Allow-Origin", "*"); // todo : need to specify the server
                 headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+                headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
                 headers.add("Access-Control-Max-Age", "3600");
+                headers.set("Access-Control-Allow-Credentials", "true"); // if you're using cookies or auth headers
 
                 if (request.getMethod() == HttpMethod.OPTIONS) {
                     response.setStatusCode(HttpStatus.OK);
@@ -49,6 +51,7 @@ public class SecurityConfig {
             return chain.filter(ctx);
         };
     }
+
 
 
 }
