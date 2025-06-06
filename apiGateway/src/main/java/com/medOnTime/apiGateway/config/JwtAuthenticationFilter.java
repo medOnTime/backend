@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         ServerHttpRequest request = exchange.getRequest();
 
         // Allow login/register requests without token
-        if (request.getURI().getPath().contains("/auth/login") || request.getURI().getPath().contains("/users/register")) {
+        if (request.getURI().getPath().contains("/auth/login") || request.getURI().getPath().contains("/user/register")) {
             return chain.filter(exchange);
         }
 
@@ -53,6 +53,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
             // You can also pass the user ID or email downstream if needed
             ServerHttpRequest modifiedRequest = request.mutate()
+                    .header("X-User-Id", claims.get("userId", String.class))
                     .header("X-User-Email", claims.getSubject())
                     .header("X-User-Role", role)
                     .build();
@@ -66,8 +67,8 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     }
 
     private boolean isAllowed(String role, String path) {
-        if (path.startsWith("/medication") && role.equals("PATIENT")) return true;
-        if (path.startsWith("/users") && (role.equals("ADMIN") || role.equals("PHARMACIST"))) return true;
+        if (path.startsWith("/medicine") && role.equals("PATIENT")) return true;
+        if (path.startsWith("/user") && (role.equals("ADMIN") || role.equals("PHARMACIST") || role.equals("PATIENT"))) return true;
         // Add more access rules here
         return false;
     }

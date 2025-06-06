@@ -2,6 +2,7 @@ package com.medOnTime.medicineService.controller;
 
 import com.medOnTime.medicineService.dto.MedicineDTO;
 import com.medOnTime.medicineService.service.MedicineService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,8 +32,9 @@ public class medicineController {
         return medicineService.addMedicineToInventry(addedMedicineDetails);
     }
 
-    @PostMapping("/getMedicineInventoryByUser")
-    public List<HashMap<String,String>> getMedicineInventoryByUser(@RequestBody String userId){
+    @GetMapping("/getMedicineInventoryByUser")
+    public List<HashMap<String,String>> getMedicineInventoryByUser(HttpServletRequest request){
+        String userId = request.getHeader("X-User-Id");
         return medicineService.getMedicineInventoryByUser(userId);
     }
 

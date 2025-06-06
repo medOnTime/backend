@@ -40,6 +40,7 @@ public class AuthServiceImpl implements AutheService{
 
         // 5. Return token and basic user info
         LoginResponse response = new LoginResponse();
+        response.setUserId(user.getUserId());
         response.setToken(token);
         response.setEmail(user.getEmail());
         response.setRole(user.getRoles().name());

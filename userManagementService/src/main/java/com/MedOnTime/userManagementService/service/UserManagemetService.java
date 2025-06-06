@@ -12,4 +12,8 @@ public interface UserManagemetService {
 
     UserDTO getUserDetailsByEmail(String email);
 
+    UserDTO getUserDetailsById(String userId);
+
+    String updateUser(String userId, UserDTO UpdateUserDetails) throws Exception;
+
 }

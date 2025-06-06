@@ -8,4 +8,8 @@ public interface UserManagementRepository {
     boolean checkUserByEmail(String email);
 
     UserDTO getUserDetailsByEmail(String email);
+
+    UserDTO getUserDetailsByUserId(int userId);
+
+    String updateUser(int userId, UserDTO updatesUserDetails) throws Exception;
 }

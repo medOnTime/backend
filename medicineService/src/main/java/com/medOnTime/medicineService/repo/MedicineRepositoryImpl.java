@@ -17,7 +17,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
 
     @Override
     public MedicineDTO getMedicineDetailById(int medicineId){
-        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description,type from medicines where medicine_id = :medicineId", MedicineDTO.class);
+        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description,type,strength from medicines where medicine_id = :medicineId", MedicineDTO.class);
         query.setParameter("medicineId", medicineId);
 
         MedicineDTO medicineDTO = (MedicineDTO) query.getSingleResult();
@@ -28,7 +28,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
     @Override
     public List<MedicineDTO> getAllMedicines(){
 
-        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description from medicines", MedicineDTO.class);
+        Query query = entityManager.createNativeQuery("select medicine_id,medicine_name,description,type,strength from medicines", MedicineDTO.class);
 
         List<MedicineDTO> medicineDTOS = query.getResultList();
 
@@ -63,7 +63,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
     public List<HashMap<String, String>> getMedicineInventoryByUser(int userId) {
         Query query = entityManager.createNativeQuery(
                 "SELECT i.inventry_id, i.medicine_id, i.quantity, i.start_date, i.end_date, " +
-                        "m.medicine_name, m.description, m.type " +
+                        "m.medicine_name, m.description, m.type, m.strength " +
                         "FROM medicine_inventry i " +
                         "JOIN medicines m ON i.medicine_id = m.medicine_id " +
                         "WHERE i.user_id = :userId",
@@ -89,6 +89,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
             inventory.put("medicineName", tuple.get("medicine_name") != null ? tuple.get("medicine_name").toString() : null);
             inventory.put("description", tuple.get("description") != null ? tuple.get("description").toString() : null);
             inventory.put("type", tuple.get("type") != null ? tuple.get("type").toString() : null);
+            inventory.put("strength", tuple.get("strength") != null ? tuple.get("strength").toString() : null);
 
             inventoryList.add(inventory);
         }
@@ -102,7 +103,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
         try {
             Query query = entityManager.createNativeQuery(
                     "SELECT i.inventry_id, i.medicine_id, i.quantity, i.start_date, i.end_date, " +
-                            "m.medicine_name, m.description, m.type " +
+                            "m.medicine_name, m.description, m.type, m.strength " +
                             "FROM medicine_inventry i " +
                             "JOIN medicines m ON i.medicine_id = m.medicine_id " +
                             "WHERE i.user_id = :userId AND i.medicine_id = :medicineId",
@@ -122,6 +123,7 @@ public class MedicineRepositoryImpl implements MedicineRepository{
             inventory.put("medicineName", tuple.get("medicine_name") != null ? tuple.get("medicine_name").toString() : null);
             inventory.put("description", tuple.get("description") != null ? tuple.get("description").toString() : null);
             inventory.put("type", tuple.get("type") != null ? tuple.get("type").toString() : null);
+            inventory.put("strength", tuple.get("strength") != null ? tuple.get("strength").toString() : null);
 
             return inventory;
 
