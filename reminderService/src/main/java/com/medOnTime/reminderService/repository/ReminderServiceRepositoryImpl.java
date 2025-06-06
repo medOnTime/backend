@@ -7,6 +7,7 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
@@ -82,17 +83,26 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     }
 
     @Override
-    public List<Map<String, String>> getScheduledReminderDetailsByUserAndStatus(Integer userId, String status) {
-        String sql = "SELECT rs.scheduled_time, r.medicine_name, r.dosage, r.medicine_type, rs.status " +
-                "FROM reminder_schedules rs " +
-                "JOIN reminders r ON rs.reminder_id = r.reminder_id " +
-                "WHERE r.user_id = :userId " +
-                "AND rs.status = :status " +
-                "ORDER BY rs.scheduled_time";
+    public List<Map<String, String>> getScheduledReminderDetailsByUserAndStatus(Integer userId, @Nullable String status) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT rs.scheduled_time, r.medicine_name, r.dosage, r.medicine_type, rs.status " +
+                        "FROM reminder_schedules rs " +
+                        "JOIN reminders r ON rs.reminder_id = r.reminder_id " +
+                        "WHERE r.user_id = :userId "
+        );
 
-        Query query = entityManager.createNativeQuery(sql);
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND rs.status = :status ");
+        }
+
+        sql.append("ORDER BY rs.scheduled_time");
+
+        Query query = entityManager.createNativeQuery(sql.toString());
         query.setParameter("userId", userId);
-        query.setParameter("status", status);
+
+        if (status != null && !status.isEmpty()) {
+            query.setParameter("status", status);
+        }
 
         List<Object[]> results = query.getResultList();
 
@@ -106,17 +116,18 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
             String reminderStatus = (String) row[4];
 
             Map<String, String> reminderDetails = new LinkedHashMap<>();
-            reminderDetails.put("Medicine", medicineName.toString());
+            reminderDetails.put("Medicine", medicineName);
             reminderDetails.put("Dosage", dosage.toString());
-            reminderDetails.put("Type", medicineType.toString());
-            reminderDetails.put("Status", reminderStatus.toString());
-            reminderDetails.put("ScheduledTime", scheduledTimestamp.toString()); // formatted as yyyy-MM-dd HH:mm:ss
+            reminderDetails.put("Type", medicineType);
+            reminderDetails.put("Status", reminderStatus);
+            reminderDetails.put("ScheduledTime", scheduledTimestamp.toString());
 
             scheduledReminders.add(reminderDetails);
         }
 
         return scheduledReminders;
     }
+
 
 
 

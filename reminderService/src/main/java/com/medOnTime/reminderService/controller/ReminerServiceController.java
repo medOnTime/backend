@@ -20,4 +20,9 @@ public class ReminerServiceController {
         return reminderScheduleService.addReminder(reminderDTO);
     }
 
+    @PostMapping("/updateReminder")
+    public String updateReminder(@RequestBody ReminderDTO reminderDTO){
+        return null;
+    }
+
 }
