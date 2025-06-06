@@ -25,7 +25,7 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
             throw new Exception("Start date, number of days, and dosage list are required.");
         }
 
-        if (reminderDTO.getDosageList().size() != reminderDTO.getTimesPerDay()) {
+        if (reminderDTO.getDosageList().size() != reminderDTO.getTimesPerDay() && reminderDTO.getDosageList().size() != 1) {
             throw new Exception("Dosage list size must match times per day.");
         }
 
@@ -65,7 +65,7 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
 
                 schedule.setReminderId(reminderId);
                 schedule.setScheduleDateAndTime(scheduledTime);
-                schedule.setDosage(reminderDTO.getDosageList().get(time));
+                schedule.setDosage(reminderDTO.getDosageList().get(reminderDTO.getDosageList().size() == 1? 0 : time));
                 schedule.setStatus(ScheduleStatus.PENDING);
                 schedule.setTakenDateAndTime(null);
 
