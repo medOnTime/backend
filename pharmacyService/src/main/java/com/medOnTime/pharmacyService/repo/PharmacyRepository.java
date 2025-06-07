@@ -20,4 +20,8 @@ public interface PharmacyRepository {
     String checkStatus(int pharmacyId);
 
     void updateSecretKey(int pharmacyId, String encodedKey);
+
+    String findEmail(int pharmacyId);
+
+    String findName(int pharmacyId);
 }

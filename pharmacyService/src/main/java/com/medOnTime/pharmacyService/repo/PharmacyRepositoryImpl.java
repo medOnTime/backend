@@ -68,11 +68,26 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
 
     @Override
     public void updateSecretKey(int pharmacyId, String encodedKey) {
-        System.out.println(encodedKey);
         Query query = entityManager.createNativeQuery("UPDATE pharmacy SET secret_key = :encodedKey WHERE pharmacy_id = :pharmacyId");
         query.setParameter("encodedKey", encodedKey);
         query.setParameter("pharmacyId", pharmacyId);
         query.executeUpdate();
+    }
+
+    @Override
+    public String findEmail(int pharmacyId) {
+        Query query = entityManager.createNativeQuery("SELECT email FROM pharmacy WHERE pharmacy_id = :pharmacyId");
+        query.setParameter("pharmacyId", pharmacyId);
+        String email = (String) query.getSingleResult();
+        return email;
+    }
+
+    @Override
+    public String findName(int pharmacyId) {
+        Query query = entityManager.createNativeQuery("SELECT pharmacy_name FROM pharmacy WHERE pharmacy_id = :pharmacyId");
+        query.setParameter("pharmacyId", pharmacyId);
+        String name = (String) query.getSingleResult();
+        return name;
     }
 
 

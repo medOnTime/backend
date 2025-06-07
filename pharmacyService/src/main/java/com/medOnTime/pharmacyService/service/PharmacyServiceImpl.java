@@ -1,5 +1,6 @@
 package com.medOnTime.pharmacyService.service;
 
+import com.medOnTime.pharmacyService.dto.EmailRequestDTO;
 import com.medOnTime.pharmacyService.dto.PharmacyDTO;
 import com.medOnTime.pharmacyService.dto.PharmacySelectionDTO;
 import com.medOnTime.pharmacyService.repo.PharmacyRepository;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.reactive.function.client.WebClient;
 
 
 import java.security.NoSuchAlgorithmException;
@@ -31,6 +33,9 @@ public class PharmacyServiceImpl implements PharmacyService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;    // BCrypt, Argon2, PBKDF2, …
+
+    @Autowired
+    private WebClient emailWebClient;
 
 
     @Override
@@ -86,9 +91,26 @@ public class PharmacyServiceImpl implements PharmacyService {
             String encodedKey = passwordEncoder.encode(rawKey);
 
             pharmacyRepository.updateSecretKey(pharmacyId, encodedKey); // implement this in repo
+            String email = pharmacyRepository.findEmail(pharmacyId);  // implement in repo
+            String name = pharmacyRepository.findName(pharmacyId);
 
-            //Todo --> String email = pharmacyRepository.findEmail(pharmacyId); // implement this in repo
-            //Todo --> emailService.sendApprovalEmail(email, rawKey);           // implement this method
+            EmailRequestDTO request = new EmailRequestDTO();
+            request.setTo(email);
+            request.setSubject("Your pharmacy has been approved!");
+            request.setName(name);
+            request.setSecretKey(rawKey); // new field you added to template
+
+            try {
+                emailWebClient.post()
+                        .uri("/email/send")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .doOnError(e -> System.err.println("Email service error: " + e.getMessage()))
+                        .block(); // Use subscribe() if you want async
+            } catch (Exception e) {
+                throw new RuntimeException("Email sending failed", e);
+            }
 
             return "Pharmacy approved successfully";
         }else {
