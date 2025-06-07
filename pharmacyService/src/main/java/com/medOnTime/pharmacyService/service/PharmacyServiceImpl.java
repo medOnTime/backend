@@ -43,7 +43,7 @@ public class PharmacyServiceImpl implements PharmacyService {
             pharmacyData.put("pharmacyName", pharmacyName);
             pharmacyData.put("address", address);
             pharmacyData.put("contactNumber", contactNumber);
-            pharmacyData.put("licenceNumber", licenseNumber);
+            pharmacyData.put("licenseNumber", licenseNumber);
             pharmacyData.put("license", fileUrl);
 
             // Save to DB
