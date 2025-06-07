@@ -1,11 +1,11 @@
 package com.medOnTime.pharmacyService.service;
 
-import com.medOnTime.pharmacyService.dto.PharmacyDTO;
 import com.medOnTime.pharmacyService.repo.PharmacyRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,31 +23,28 @@ public class PharmacyServiceImpl implements PharmacyService {
 
     @Override
     @Transactional
-    public String addPharmacy(String name, String address, String contactNumber,
-                              String certificateNumber, String certifiedDate,
-                              MultipartFile certificateFile) {
+    public String addPharmacy(String pharmacyName, String address, String contactNumber, String licenseNumber,  MultipartFile licence) {
 
         try {
-            // Duplication check
-            if (pharmacyRepository.existsByCertificateNumber(certificateNumber)) {
+            System.out.println(licenseNumber);
+            if (pharmacyRepository.existsByLicenseNumber(licenseNumber)) {
                 return "A pharmacy with this certificate number already exists.";
             }
 
-            if (certificateFile.isEmpty()) {
-                return "Certificate file is required.";
+            if (licence.isEmpty()) {
+                return "license file is required.";
             }
 
             // Upload to S3 and get file URL
-            String fileUrl = s3FileService.uploadFile(certificateFile);
+            String fileUrl = s3FileService.uploadFile(licence);
 
             // Prepare data
             HashMap<String, String> pharmacyData = new HashMap<>();
-            pharmacyData.put("name", name);
+            pharmacyData.put("pharmacyName", pharmacyName);
             pharmacyData.put("address", address);
             pharmacyData.put("contactNumber", contactNumber);
-            pharmacyData.put("certificateNumber", certificateNumber);
-            pharmacyData.put("certifiedNumber", certifiedDate);
-            pharmacyData.put("filePath", fileUrl);
+            pharmacyData.put("licenceNumber", licenseNumber);
+            pharmacyData.put("license", fileUrl);
 
             // Save to DB
             return pharmacyRepository.addPharmacy(pharmacyData);
@@ -57,14 +54,5 @@ public class PharmacyServiceImpl implements PharmacyService {
         }
     }
 
-    @Override
-    public List<PharmacyDTO> getAllPharmacies(){
-        return pharmacyRepository.getAllPharmacies();
-    }
-
-    @Override
-    public List<HashMap<String, String>> getPharmacyById(String id) {
-        return pharmacyRepository.getPharmacyById(Integer.parseInt(id));
-    }
 
 }

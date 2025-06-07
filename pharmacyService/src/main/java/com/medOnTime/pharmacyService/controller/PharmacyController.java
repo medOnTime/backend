@@ -1,14 +1,12 @@
 package com.medOnTime.pharmacyService.controller;
 
-import com.medOnTime.pharmacyService.dto.PharmacyDTO;
+
+import com.medOnTime.pharmacyService.dto.PharmacyRequestDTO;
 import com.medOnTime.pharmacyService.service.PharmacyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.HashMap;
-import java.util.List;
-
 
 @RestController
 @RequestMapping("pharmacy")
@@ -17,27 +15,16 @@ public class PharmacyController {
     @Autowired
     private PharmacyService pharmacyService;
 
-    @PostMapping("/add-pharmacy")
+    @PostMapping(value = "/add-pharmacy", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String addPharmacy(
-            @RequestParam("name") String name,
-            @RequestParam("address") String address,
-            @RequestParam("contactNumber") String contactNumber,
-            @RequestParam("certificateNumber") String certificateNumber,
-            @RequestParam("certifiedDate") String certifiedDate,
-            @RequestParam("certificateFile") MultipartFile certificateFile
+            @RequestPart("data") PharmacyRequestDTO data,
+            @RequestPart("license") MultipartFile license
     ) throws Exception {
-        return pharmacyService.addPharmacy(name, address, contactNumber,
-                certificateNumber, certifiedDate, certificateFile);
+        return pharmacyService.addPharmacy(
+                data.getPharmacyName(), data.getAddress(), data.getContactNumber(), data.getLicenseNumber(), license
+        );
     }
 
-    @GetMapping("/get-all-pharmacies")
-    public List<PharmacyDTO> getAllPharmacies(){
-        return pharmacyService.getAllPharmacies();
-    }
 
-    @PostMapping("/get-pharmacy-by-id")
-    public List<HashMap<String,String>> getPharmacyById(@RequestBody String id){
-        return pharmacyService.getPharmacyById(id);
-    }
 
 }
