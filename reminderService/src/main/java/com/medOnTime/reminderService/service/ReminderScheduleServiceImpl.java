@@ -6,8 +6,13 @@ import com.medOnTime.reminderService.dto.ScheduleStatus;
 import com.medOnTime.reminderService.repository.ReminderServiceRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,19 +62,26 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
 
         for (int day = 0; day < reminderDTO.getNumberOfDays(); day++) {
             for (int time = 0; time < reminderDTO.getTimesPerDay(); time++) {
-                ReminderSchedulesDTO schedule = new ReminderSchedulesDTO();
+
 
                 LocalDateTime scheduledTime = baseTime
                         .plusDays(day)
                         .plusHours(time * intervalHours);
 
-                schedule.setReminderId(reminderId);
-                schedule.setScheduleDateAndTime(scheduledTime);
-                schedule.setDosage(reminderDTO.getDosageList().get(reminderDTO.getDosageList().size() == 1? 0 : time));
-                schedule.setStatus(ScheduleStatus.PENDING);
-                schedule.setTakenDateAndTime(null);
+                ReminderSchedulesDTO schedule = ReminderSchedulesDTO.builder()
+                        .reminderId(reminderId)
+                        .scheduleDateAndTime(scheduledTime)
+                        .dosage(reminderDTO.getDosageList().get(reminderDTO.getDosageList().size() == 1? 0 : time))
+                        .status(ScheduleStatus.PENDING)
+                        .takenDateAndTime(null)
+                        .build();
 
                 schedules.add(schedule);
+
+                if (scheduledTime.toLocalDate().isEqual(LocalDate.now())) {
+                    reminderServiceRepository.addScheduleForTempTable(schedule);
+                }
+
             }
         }
 
@@ -79,6 +91,42 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
         return "Reminder added with " + schedules.size() + " schedules.";
     }
 
+    @Override
+    public Page<ReminderSchedulesDTO> getUserRemindersByFiltering(String userId, @Nullable Map<String,String> filter, int page, int size) {
+        Integer intUserId = Integer.parseInt(userId);
 
+        String status = null;
+        String dateStr = null;
+        Integer reminderId = null;
+
+        if (filter != null) {
+            status = filter.getOrDefault("status", null);
+            dateStr = filter.getOrDefault("date", null);
+
+            String reminderIdStr = filter.getOrDefault("reminderId", null);
+            if (reminderIdStr != null && !reminderIdStr.isEmpty()) {
+                reminderId = Integer.parseInt(reminderIdStr);
+            }
+        }
+
+        LocalDate dateTime = null;
+        if (dateStr != null && !dateStr.isEmpty()) {
+
+            dateTime = LocalDate.parse(dateStr);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return reminderServiceRepository.findScheduledRemindersWithFilters(intUserId, status, dateTime, reminderId, pageable);
+    }
+
+    public List<ReminderDTO> getRemindersByFilterForUpdate(String userId) {
+
+        Integer userIdInt = Integer.parseInt(userId);
+        LocalDateTime checkedDateTime = LocalDateTime.now();
+
+        return reminderServiceRepository.getRemindersByFilterForUpdate(userIdInt,checkedDateTime);
+
+    }
 
 }
