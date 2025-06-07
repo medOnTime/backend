@@ -8,5 +8,7 @@ public class PharmacyRequestDTO {
     private String address;
     private String contactNumber;
     private String licenseNumber;
+    private String email;
+    private String license;
     // Getters & setters
 }

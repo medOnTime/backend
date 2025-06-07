@@ -1,5 +1,7 @@
 package com.medOnTime.pharmacyService.repo;
 
+import com.medOnTime.pharmacyService.dto.PharmacyDTO;
+import com.medOnTime.pharmacyService.dto.PharmacySelectionDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
@@ -30,13 +32,56 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
         return count.intValue() > 0;
     }
 
+    @Override
+    public List<PharmacyDTO> getAllPharmacies() {
+        Query query = entityManager.createNativeQuery("select pharmacy_id,pharmacy_name,address,contact_number,license_number,status,email,license from pharmacy", PharmacyDTO.class);
+
+        List<PharmacyDTO> pharmacyDTOS = query.getResultList();
+
+        return pharmacyDTOS;    }
+
+    @Override
+    public List<PharmacySelectionDTO> getAllPharmaciesForSelection() {
+        Query query = entityManager.createNativeQuery("select pharmacy_id,pharmacy_name,address from pharmacy where status = 'TRUE'", PharmacySelectionDTO.class);
+        List<PharmacySelectionDTO> pharmacySelectionDTOS = query.getResultList();
+        return pharmacySelectionDTOS;
+    }
+
+    @Override
+    public String setApproval(int pharmacyId) {
+
+            Query updateQuery = entityManager.createNativeQuery("UPDATE pharmacy SET status = 'TRUE' WHERE pharmacy_id = :pharmacyId");
+            updateQuery.setParameter("pharmacyId", pharmacyId);
+            int rows = updateQuery.executeUpdate();
+
+
+        return rows > 0 ? "Pharmacy approved successfully" : "Approval failed";
+    }
+
+    @Override
+    public String checkStatus(int pharmacyId) {
+        Query checkQuery = entityManager.createNativeQuery("SELECT status FROM pharmacy WHERE pharmacy_id = :pharmacyId");
+        checkQuery.setParameter("pharmacyId", pharmacyId);
+        String status = (String) checkQuery.getSingleResult();
+        return status;
+    }
+
+    @Override
+    public void updateSecretKey(int pharmacyId, String encodedKey) {
+        System.out.println(encodedKey);
+        Query query = entityManager.createNativeQuery("UPDATE pharmacy SET secret_key = :encodedKey WHERE pharmacy_id = :pharmacyId");
+        query.setParameter("encodedKey", encodedKey);
+        query.setParameter("pharmacyId", pharmacyId);
+        query.executeUpdate();
+    }
+
 
     @Override
     @Transactional
     public String addPharmacy(HashMap<String, String> addedPharmacyDetails) {
         Query insertQuery = entityManager.createNativeQuery(
-                "INSERT INTO pharmacy (pharmacy_name, address, contact_number, license_number, license) " +
-                        "VALUES (:pharmacyName, :address, :contactNumber,:licenseNumber, :license)"
+                "INSERT INTO pharmacy (pharmacy_name, address, contact_number, license_number,email,status, license) " +
+                        "VALUES (:pharmacyName, :address, :contactNumber,:licenseNumber,:email, 'FALSE', :license)"
         );
 
 
@@ -44,6 +89,7 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
         insertQuery.setParameter("address", addedPharmacyDetails.get("address"));
         insertQuery.setParameter("contactNumber", addedPharmacyDetails.get("contactNumber"));
         insertQuery.setParameter("licenseNumber", addedPharmacyDetails.get("licenseNumber"));
+        insertQuery.setParameter("email", addedPharmacyDetails.get("email"));
         insertQuery.setParameter("license", addedPharmacyDetails.get("license"));
 
 
