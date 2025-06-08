@@ -69,6 +69,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     private boolean isAllowed(String role, String path) {
         if (path.startsWith("/medicine") && role.equals("PATIENT")) return true;
         if (path.startsWith("/user") && (role.equals("ADMIN") || role.equals("PHARMACIST") || role.equals("PATIENT"))) return true;
+        if (path.startsWith("/reminder") && role.equals("PATIENT")) return true;
         // Add more access rules here
         return false;
     }
