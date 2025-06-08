@@ -34,7 +34,7 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
 
     @Override
     public List<PharmacyDTO> getAllPharmacies() {
-        Query query = entityManager.createNativeQuery("select pharmacy_id,pharmacy_name,address,contact_number,license_number,status,email,license from pharmacy", PharmacyDTO.class);
+        Query query = entityManager.createNativeQuery("select pharmacy_id,pharmacy_name,address,contact_number,license_number,status,email,license from pharmacy order by pharmacy_id DESC", PharmacyDTO.class);
 
         List<PharmacyDTO> pharmacyDTOS = query.getResultList();
 
@@ -42,7 +42,7 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
 
     @Override
     public List<PharmacySelectionDTO> getAllPharmaciesForSelection() {
-        Query query = entityManager.createNativeQuery("select pharmacy_id,pharmacy_name,address from pharmacy where status = 'TRUE'", PharmacySelectionDTO.class);
+        Query query = entityManager.createNativeQuery("select pharmacy_id,pharmacy_name,address from pharmacy where status = 'APPROVED'", PharmacySelectionDTO.class);
         List<PharmacySelectionDTO> pharmacySelectionDTOS = query.getResultList();
         return pharmacySelectionDTOS;
     }
@@ -50,7 +50,7 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
     @Override
     public String setApproval(int pharmacyId) {
 
-            Query updateQuery = entityManager.createNativeQuery("UPDATE pharmacy SET status = 'TRUE' WHERE pharmacy_id = :pharmacyId");
+            Query updateQuery = entityManager.createNativeQuery("UPDATE pharmacy SET status = 'APPROVED' WHERE pharmacy_id = :pharmacyId");
             updateQuery.setParameter("pharmacyId", pharmacyId);
             int rows = updateQuery.executeUpdate();
 
@@ -90,13 +90,29 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
         return name;
     }
 
+    @Override
+    public void setRejection(int pharmacyId) {
+        Query query = entityManager.createNativeQuery("UPDATE pharmacy SET status = 'REJECTED' WHERE pharmacy_id = :pharmacyId");
+        query.setParameter("pharmacyId", pharmacyId);
+        query.executeUpdate();
+    }
+
+    @Override
+    public String findLicenseFileKeyByLicenseNumber(String licenseNumber) {
+        Query query = entityManager.createNativeQuery("SELECT license FROM pharmacy WHERE license_number = :licenseNumber");
+        query.setParameter("licenseNumber", licenseNumber);
+        String license = (String) query.getSingleResult();
+        System.out.println(license);
+        return license;
+    }
+
 
     @Override
     @Transactional
     public String addPharmacy(HashMap<String, String> addedPharmacyDetails) {
         Query insertQuery = entityManager.createNativeQuery(
                 "INSERT INTO pharmacy (pharmacy_name, address, contact_number, license_number,email,status, license) " +
-                        "VALUES (:pharmacyName, :address, :contactNumber,:licenseNumber,:email, 'FALSE', :license)"
+                        "VALUES (:pharmacyName, :address, :contactNumber,:licenseNumber,:email, 'PENDING', :license)"
         );
 
 

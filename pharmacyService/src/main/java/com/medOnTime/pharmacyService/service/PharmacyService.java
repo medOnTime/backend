@@ -18,4 +18,8 @@ public interface PharmacyService {
     List<PharmacySelectionDTO> getAllPharmaciesForSelection();
 
     String setApproval(int pharmacyId);
+
+    String setRejection(int pharmacyId);
+
+    String getLicensePresignedUrl(String licenseNumber);
 }

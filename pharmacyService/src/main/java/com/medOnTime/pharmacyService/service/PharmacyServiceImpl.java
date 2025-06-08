@@ -11,15 +11,19 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Base64;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class PharmacyServiceImpl implements PharmacyService {
@@ -84,7 +88,7 @@ public class PharmacyServiceImpl implements PharmacyService {
     @Transactional
     @Override
     public String setApproval(int pharmacyId) {
-        if(pharmacyRepository.checkStatus(pharmacyId).equals("FALSE")){
+        if(pharmacyRepository.checkStatus(pharmacyId).equals("PENDING")){
             pharmacyRepository.setApproval(pharmacyId);
             String rawKey = generateSecretKey();
             System.out.println(rawKey);
@@ -119,6 +123,48 @@ public class PharmacyServiceImpl implements PharmacyService {
 
     }
 
+    @Transactional
+    @Override
+    public String setRejection(int pharmacyId) {
+        if(pharmacyRepository.checkStatus(pharmacyId).equals("PENDING") && !(pharmacyRepository.checkStatus(pharmacyId).equals("APPROVED"))){
+            pharmacyRepository.setRejection(pharmacyId);
+
+            String email = pharmacyRepository.findEmail(pharmacyId);  // implement in repo
+            String name = pharmacyRepository.findName(pharmacyId);
+
+            EmailRequestDTO request = new EmailRequestDTO();
+            request.setTo(email);
+            request.setSubject("Your pharmacy has been rejected!");
+            request.setName(name);
+
+            try {
+                emailWebClient.post()
+                        .uri("/email/send")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .doOnError(e -> System.err.println("Email service error: " + e.getMessage()))
+                        .block(); // Use subscribe() if you want async
+            } catch (Exception e) {
+                throw new RuntimeException("Email sending failed", e);
+            }
+            return "Pharmacy rejected successfully";
+        }else{
+            return "Pharmacy rejection failed";
+        }
+    }
+
+    @Override
+    public String getLicensePresignedUrl(String licenseNumber) {
+        String s3Key = pharmacyRepository.findLicenseFileKeyByLicenseNumber(licenseNumber);
+
+        if (s3Key == null || s3Key.isEmpty()) {
+            throw new NoSuchElementException("License file not found.");
+        }
+
+        return s3FileService.generatePresignedUrl(s3Key);
+    }
+
     private String generateSecretKey() {
         try {
             byte[] bytes = new byte[32];
@@ -129,5 +175,7 @@ public class PharmacyServiceImpl implements PharmacyService {
             throw new RuntimeException("SecureRandom algorithm not available", e);
         }
     }
+
+
 
 }

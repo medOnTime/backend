@@ -28,7 +28,12 @@ public class EmailServiceImpl implements EmailService {
         context.setVariable("name", request.getName());
         context.setVariable("secretKey",request.getSecretKey());
 
-        String body = templateEngine.process("email-template", context);
+        String body = "";
+        if(request.getSecretKey() != null){
+             body = templateEngine.process("approval-email-template", context);
+        }else{
+            body = templateEngine.process("rejected-email-template", context);
+        }
 
         MimeMessage mimeMessage = mailSender.createMimeMessage();
 

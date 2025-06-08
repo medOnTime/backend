@@ -24,4 +24,8 @@ public interface PharmacyRepository {
     String findEmail(int pharmacyId);
 
     String findName(int pharmacyId);
+
+    void setRejection(int pharmacyId);
+
+    String findLicenseFileKeyByLicenseNumber(String licenseNumber);
 }
