@@ -12,8 +12,10 @@ public interface ReminderScheduleService {
 
     public String addReminder(ReminderDTO reminderDTO) throws Exception;
 
-    Page<ReminderSchedulesDTO> getUserRemindersByFiltering(String userId, @Nullable Map<String,String> filter, int page, int size);
+    Page<ReminderSchedulesDTO> findScheduledRemindersWithFilters(String userId, @Nullable Map<String,String> filter, int page, int size);
 
     List<ReminderDTO> getRemindersByFilterForUpdate(String userId);
+
+    String updateReminder(ReminderDTO newReminderDTO) throws Exception;
 
 }

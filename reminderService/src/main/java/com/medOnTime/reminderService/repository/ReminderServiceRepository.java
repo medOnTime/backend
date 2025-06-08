@@ -22,6 +22,12 @@ public interface ReminderServiceRepository {
 
     Page<ReminderSchedulesDTO> findScheduledRemindersWithFilters(Integer userId, @Nullable String status, @Nullable LocalDate date, @Nullable Integer reminderId, Pageable pageable);
 
-    List<ReminderDTO> getRemindersByFilterForUpdate(Integer userId, @Nullable LocalDateTime checkedDateTime);
+    List<ReminderDTO> getRemindersByFilter(@Nullable Integer userId, @Nullable LocalDateTime checkedDateTime, @Nullable Integer reminderId);
+
+    List<ReminderSchedulesDTO> getScheduleListByReminderId(Integer reminderId);
+
+    void updateReminder(ReminderDTO reminderDTO);
+
+    void updateScheduleStatus(ReminderSchedulesDTO schedule);
 
 }

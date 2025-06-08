@@ -175,22 +175,38 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     }
 
     @Override
-    public List<ReminderDTO> getRemindersByFilterForUpdate(Integer userId, @Nullable LocalDateTime checkedDateTime) {
+    public List<ReminderDTO> getRemindersByFilter(@Nullable Integer userId, @Nullable LocalDateTime checkedDateTime, @Nullable Integer reminderId) {
 
-        // Create native query
-        Query query = entityManager.createNativeQuery(
+        StringBuilder sql = new StringBuilder(
                 "SELECT reminder_id, user_id, medicine_id, medicine_name, " +
                         "medicine_type, strength, dosage, times_per_day, start_date, number_of_days, end_date " +
-                        "FROM reminders " +
-                        "WHERE user_id = :userId AND end_date >= :checkedDateTime",
-                Tuple.class
+                        "FROM reminders WHERE 1=1 "
         );
 
-        // Set parameters
-        query.setParameter("userId", userId);
-        query.setParameter("checkedDateTime", checkedDateTime);
+        Map<String, Object> parameters = new HashMap<>();
 
-        // Execute query and map results
+        if (userId != null) {
+            sql.append("AND user_id = :userId ");
+            parameters.put("userId", userId);
+        }
+
+        if (checkedDateTime != null) {
+            sql.append("AND end_date >= :checkedDateTime ");
+            parameters.put("checkedDateTime", checkedDateTime);
+        }
+
+        if (reminderId != null) {
+            sql.append("AND reminder_id = :reminderId ");
+            parameters.put("reminderId", reminderId);
+        }
+
+        Query query = entityManager.createNativeQuery(sql.toString(), Tuple.class);
+
+        // Set parameters dynamically
+        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+            query.setParameter(entry.getKey(), entry.getValue());
+        }
+
         List<Tuple> tupleList = query.getResultList();
 
         return tupleList.stream().map(tuple -> {
@@ -220,4 +236,90 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
         }).collect(Collectors.toList());
     }
 
+
+    @Override
+    public List<ReminderSchedulesDTO> getScheduleListByReminderId(Integer reminderId) {
+        Query query = entityManager.createNativeQuery(
+                "SELECT schedule_id, reminder_id, schedule_time, status, taken_time, dosage " +
+                        "FROM reminder_scheduler WHERE reminder_id = :reminderId ORDER BY schedule_time ASC",
+                Tuple.class
+        );
+
+        query.setParameter("reminderId", reminderId);
+        List<Tuple> tupleList = query.getResultList();
+
+        List<ReminderSchedulesDTO> result = new ArrayList<>();
+
+        for (Tuple tuple : tupleList) {
+            ReminderSchedulesDTO dto = ReminderSchedulesDTO.builder()
+                    .scheduleId(tuple.get("schedule_id").toString())
+                    .reminderId(tuple.get("reminder_id").toString())
+                    .scheduleDateAndTime(
+                            tuple.get("schedule_time") != null
+                                    ? ((Timestamp) tuple.get("schedule_time")).toLocalDateTime()
+                                    : null
+                    )
+                    .status(
+                            tuple.get("status") != null
+                                    ? ScheduleStatus.valueOf(tuple.get("status").toString())
+                                    : null
+                    )
+                    .takenDateAndTime(
+                            tuple.get("taken_time") != null
+                                    ? ((Timestamp) tuple.get("taken_time")).toLocalDateTime()
+                                    : null
+                    )
+                    .dosage(tuple.get("dosage") != null ? ((Number) tuple.get("dosage")).intValue() : null)
+                    .build();
+
+            result.add(dto);
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void updateReminder(ReminderDTO reminderDTO) {
+        entityManager.createNativeQuery(
+                        "UPDATE reminders SET " +
+                                "medicine_id = :medicineId, " +
+                                "medicine_name = :medicineName, " +
+                                "medicine_type = :medicineType, " +
+                                "strength = :strength, " +
+                                "dosage = :dosageString, " +
+                                "times_per_day = :timesPerDay, " +
+                                "start_date = :startDate, " +
+                                "number_of_days = :numberOfDays, " +
+                                "end_date = :endDate " +
+                                "WHERE reminder_id = :reminderId"
+                )
+                .setParameter("medicineId", reminderDTO.getMedicineId())
+                .setParameter("medicineName", reminderDTO.getMedicineName())
+                .setParameter("medicineType", reminderDTO.getMedicineType())
+                .setParameter("strength", reminderDTO.getStrength())
+                .setParameter("dosageString", reminderDTO.getDosageString())
+                .setParameter("timesPerDay", reminderDTO.getTimesPerDay())
+                .setParameter("startDate", reminderDTO.getStartDate())
+                .setParameter("numberOfDays", reminderDTO.getNumberOfDays())
+                .setParameter("endDate", reminderDTO.getEndDate())
+                .setParameter("reminderId", reminderDTO.getReminderId())
+                .executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public void updateScheduleStatus(ReminderSchedulesDTO schedule) {
+        entityManager.createNativeQuery(
+                        "UPDATE reminder_schedules SET " +
+                                "status = :status, " +
+                                "taken_date_and_time = :takenDateTime " +
+                                "WHERE reminder_id = :reminderId AND schedule_date_and_time = :scheduleDateTime"
+                )
+                .setParameter("status", schedule.getStatus().name())
+                .setParameter("takenDateTime", schedule.getTakenDateAndTime())
+                .setParameter("reminderId", schedule.getReminderId())
+                .setParameter("scheduleDateTime", schedule.getScheduleDateAndTime())
+                .executeUpdate();
+    }
 }

@@ -28,10 +28,10 @@ public class ReminerServiceController {
         return null;
     }
 
-    @PostMapping("/getUserRemindersByFiltering/{page}/{pageSize}")
+    @PostMapping("/findScheduledRemindersWithFilters/{page}/{pageSize}")
     public Page<ReminderSchedulesDTO> getUserRemindersByFiltering(@RequestBody(required = false) Map<String,String> filter, HttpServletRequest request, @PathVariable int page, @PathVariable int pageSize){
         String userId = request.getHeader("X-User-Id");
-        return reminderScheduleService.getUserRemindersByFiltering(userId,filter,page,pageSize);
+        return reminderScheduleService.findScheduledRemindersWithFilters(userId,filter,page,pageSize);
     }
 
     @GetMapping("/getRemindersByFilterForUpdate")

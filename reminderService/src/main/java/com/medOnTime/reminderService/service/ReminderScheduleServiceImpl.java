@@ -92,7 +92,7 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
     }
 
     @Override
-    public Page<ReminderSchedulesDTO> getUserRemindersByFiltering(String userId, @Nullable Map<String,String> filter, int page, int size) {
+    public Page<ReminderSchedulesDTO> findScheduledRemindersWithFilters(String userId, @Nullable Map<String,String> filter, int page, int size) {
         Integer intUserId = Integer.parseInt(userId);
 
         String status = null;
@@ -120,13 +120,161 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
         return reminderServiceRepository.findScheduledRemindersWithFilters(intUserId, status, dateTime, reminderId, pageable);
     }
 
+    @Override
     public List<ReminderDTO> getRemindersByFilterForUpdate(String userId) {
 
         Integer userIdInt = Integer.parseInt(userId);
         LocalDateTime checkedDateTime = LocalDateTime.now();
 
-        return reminderServiceRepository.getRemindersByFilterForUpdate(userIdInt,checkedDateTime);
+        return reminderServiceRepository.getRemindersByFilter(userIdInt,checkedDateTime,null);
 
     }
+
+    @Override
+    @Transactional
+    public String updateReminder(ReminderDTO newReminderDTO) throws Exception {
+        ReminderDTO existingReminder = reminderServiceRepository.getRemindersByFilter(null,null,Integer.parseInt(newReminderDTO.getReminderId())).get(0);
+
+        if (existingReminder == null) {
+            throw new Exception("Reminder not found.");
+        }
+
+        // Normalize and compare fields (case-insensitive, trim spaces)
+        boolean isSameReminder = isEqualIgnoringCase(existingReminder.getMedicineName(), newReminderDTO.getMedicineName()) &&
+                isEqualIgnoringCase(existingReminder.getMedicineType(), newReminderDTO.getMedicineType()) &&
+                isEqualIgnoringCase(existingReminder.getStrength(), newReminderDTO.getStrength()) &&
+                existingReminder.getTimesPerDay().equals(newReminderDTO.getTimesPerDay()) &&
+                existingReminder.getDosageList().equals(newReminderDTO.getDosageList());
+
+        List<ReminderSchedulesDTO> currentSchedules = reminderServiceRepository
+                .getScheduleListByReminderId(Integer.parseInt(newReminderDTO.getReminderId()));
+
+        boolean hasTakenSchedules = currentSchedules.stream()
+                .anyMatch(schedule -> schedule.getStatus() == ScheduleStatus.TAKEN);
+
+        int currentNumberOfDays = existingReminder.getNumberOfDays();
+        int newNumberOfDays = newReminderDTO.getNumberOfDays();
+
+        if (!isSameReminder && hasTakenSchedules) {
+            throw new Exception("Reminder cannot be fully updated as some schedules have already been taken.");
+        }
+
+        if (hasTakenSchedules && currentNumberOfDays != newNumberOfDays) {
+            if (newNumberOfDays < currentNumberOfDays) {
+                // REDUCE number of days
+                int expectedPendingCount = newReminderDTO.getTimesPerDay() * (currentNumberOfDays - newNumberOfDays);
+
+                List<ReminderSchedulesDTO> pendingSchedules = currentSchedules.stream()
+                        .filter(s -> s.getStatus() == ScheduleStatus.PENDING)
+                        .collect(Collectors.toList());
+
+                if (pendingSchedules.size() < expectedPendingCount) {
+                    throw new Exception("Cannot reduce days because not enough pending schedules exist.");
+                }
+
+                // Cancel excess pending schedules
+                List<ReminderSchedulesDTO> toCancel = pendingSchedules.subList(0, expectedPendingCount);
+                toCancel.forEach(s -> {
+                    s.setStatus(ScheduleStatus.CANCEL);
+                    reminderServiceRepository.updateScheduleStatus(s);
+                });
+
+                // Update reminder
+                newReminderDTO.setEndDate(newReminderDTO.getStartDate().plusDays(newNumberOfDays - 1));
+                reminderServiceRepository.updateReminder(newReminderDTO);
+
+                return "Reminder partially updated (number of days reduced).";
+
+            } else {
+                // INCREASE number of days
+                int extraDays = newNumberOfDays - currentNumberOfDays;
+                int intervalHours = 24 / newReminderDTO.getTimesPerDay();
+                LocalDateTime baseTime = newReminderDTO.getStartDate().plusDays(currentNumberOfDays);
+
+                List<ReminderSchedulesDTO> newSchedules = new ArrayList<>();
+
+                for (int day = 0; day < extraDays; day++) {
+                    for (int time = 0; time < newReminderDTO.getTimesPerDay(); time++) {
+                        LocalDateTime scheduledTime = baseTime.plusDays(day).plusHours(time * intervalHours);
+
+                        ReminderSchedulesDTO schedule = ReminderSchedulesDTO.builder()
+                                .reminderId(newReminderDTO.getReminderId())
+                                .scheduleDateAndTime(scheduledTime)
+                                .dosage(newReminderDTO.getDosageList().get(
+                                        newReminderDTO.getDosageList().size() == 1 ? 0 : time))
+                                .status(ScheduleStatus.PENDING)
+                                .takenDateAndTime(null)
+                                .build();
+
+                        newSchedules.add(schedule);
+
+                        if (scheduledTime.toLocalDate().isEqual(LocalDate.now())) {
+                            reminderServiceRepository.addScheduleForTempTable(schedule);
+                        }
+                    }
+                }
+
+                // Update reminder
+                newReminderDTO.setEndDate(newReminderDTO.getStartDate().plusDays(newNumberOfDays - 1));
+                reminderServiceRepository.updateReminder(newReminderDTO);
+
+                // Save new schedules
+                newSchedules.forEach(reminderServiceRepository::addSchedule);
+
+                return "Reminder partially updated (number of days increased).";
+            }
+        }
+
+
+        // Full update allowed
+        // Cancel all current schedules
+        currentSchedules.forEach(s -> {
+            s.setStatus(ScheduleStatus.CANCEL);
+            reminderServiceRepository.updateScheduleStatus(s);
+        });
+
+        // Update reminder
+        newReminderDTO.setEndDate(newReminderDTO.getStartDate().plusDays(newNumberOfDays - 1));
+        String dosageString = newReminderDTO.getDosageList().stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        newReminderDTO.setDosageString(dosageString);
+        reminderServiceRepository.updateReminder(newReminderDTO);
+
+        // Add new schedules
+        List<ReminderSchedulesDTO> newSchedules = new ArrayList<>();
+        int intervalHours = 24 / newReminderDTO.getTimesPerDay();
+        LocalDateTime baseTime = newReminderDTO.getStartDate();
+
+        for (int day = 0; day < newNumberOfDays; day++) {
+            for (int time = 0; time < newReminderDTO.getTimesPerDay(); time++) {
+                LocalDateTime scheduledTime = baseTime.plusDays(day).plusHours(time * intervalHours);
+
+                ReminderSchedulesDTO schedule = ReminderSchedulesDTO.builder()
+                        .reminderId(newReminderDTO.getReminderId())
+                        .scheduleDateAndTime(scheduledTime)
+                        .dosage(newReminderDTO.getDosageList().get(
+                                newReminderDTO.getDosageList().size() == 1 ? 0 : time))
+                        .status(ScheduleStatus.PENDING)
+                        .takenDateAndTime(null)
+                        .build();
+
+                newSchedules.add(schedule);
+
+                if (scheduledTime.toLocalDate().isEqual(LocalDate.now())) {
+                    reminderServiceRepository.addScheduleForTempTable(schedule);
+                }
+            }
+        }
+
+        newSchedules.forEach(reminderServiceRepository::addSchedule);
+        return "Reminder fully updated with new schedules.";
+    }
+
+    private boolean isEqualIgnoringCase(String s1, String s2) {
+        if (s1 == null || s2 == null) return false;
+        return s1.trim().equalsIgnoreCase(s2.trim());
+    }
+
 
 }
