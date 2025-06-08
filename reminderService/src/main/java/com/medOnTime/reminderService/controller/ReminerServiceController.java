@@ -24,8 +24,8 @@ public class ReminerServiceController {
     }
 
     @PostMapping("/updateReminder")
-    public String updateReminder(@RequestBody ReminderDTO reminderDTO){
-        return null;
+    public String updateReminder(@RequestBody ReminderDTO reminderDTO) throws Exception {
+        return reminderScheduleService.updateReminder(reminderDTO);
     }
 
     @PostMapping("/findScheduledRemindersWithFilters/{page}/{pageSize}")

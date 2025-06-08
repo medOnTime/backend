@@ -94,7 +94,7 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     @Transactional
     public void addScheduleForTempTable(ReminderSchedulesDTO reminderSchedulesDTO) {
         Query query = entityManager.createNativeQuery(
-                "INSERT INTO reminder_scheduler (reminder_id, scheduled_time, status, taken_time, dosage) " +
+                "INSERT INTO temp_scheduler (reminder_id, scheduled_time, status, taken_time, dosage) " +
                         "VALUES (:reminderId, :scheduledTime, :status, :takenTime, :dosage)"
         );
 
@@ -240,8 +240,8 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     @Override
     public List<ReminderSchedulesDTO> getScheduleListByReminderId(Integer reminderId) {
         Query query = entityManager.createNativeQuery(
-                "SELECT schedule_id, reminder_id, schedule_time, status, taken_time, dosage " +
-                        "FROM reminder_scheduler WHERE reminder_id = :reminderId ORDER BY schedule_time ASC",
+                "SELECT schedule_id, reminder_id, scheduled_time, status, taken_time, dosage " +
+                        "FROM reminder_scheduler WHERE reminder_id = :reminderId ORDER BY scheduled_time ASC",
                 Tuple.class
         );
 
@@ -255,8 +255,8 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
                     .scheduleId(tuple.get("schedule_id").toString())
                     .reminderId(tuple.get("reminder_id").toString())
                     .scheduleDateAndTime(
-                            tuple.get("schedule_time") != null
-                                    ? ((Timestamp) tuple.get("schedule_time")).toLocalDateTime()
+                            tuple.get("scheduled_time") != null
+                                    ? ((Timestamp) tuple.get("scheduled_time")).toLocalDateTime()
                                     : null
                     )
                     .status(
@@ -269,7 +269,7 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
                                     ? ((Timestamp) tuple.get("taken_time")).toLocalDateTime()
                                     : null
                     )
-                    .dosage(tuple.get("dosage") != null ? ((Number) tuple.get("dosage")).intValue() : null)
+                    .dosage(tuple.get("dosage") != null ? Integer.parseInt(tuple.get("dosage").toString()) : null)
                     .build();
 
             result.add(dto);
@@ -311,15 +311,29 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     @Transactional
     public void updateScheduleStatus(ReminderSchedulesDTO schedule) {
         entityManager.createNativeQuery(
-                        "UPDATE reminder_schedules SET " +
+                        "UPDATE reminder_scheduler SET " +
                                 "status = :status, " +
-                                "taken_date_and_time = :takenDateTime " +
-                                "WHERE reminder_id = :reminderId AND schedule_date_and_time = :scheduleDateTime"
+                                "taken_time = :takenDateTime " +
+                                "WHERE schedule_id = :scheduleId"
                 )
                 .setParameter("status", schedule.getStatus().name())
                 .setParameter("takenDateTime", schedule.getTakenDateAndTime())
-                .setParameter("reminderId", schedule.getReminderId())
-                .setParameter("scheduleDateTime", schedule.getScheduleDateAndTime())
+                .setParameter("scheduleId", schedule.getScheduleId())
                 .executeUpdate();
+    }
+
+    @Override
+    public void deleteFromTempScheduler(String reminderId, LocalDateTime scheduleTime) {
+        int deletedCount = entityManager.createNativeQuery(
+                        "DELETE FROM temp_scheduler WHERE reminder_id = :reminderId AND scheduled_time = :scheduleTime"
+                )
+                .setParameter("reminderId", reminderId)
+                .setParameter("scheduleTime", Timestamp.valueOf(scheduleTime.withNano(0)))
+                .executeUpdate();
+
+        // Optional: Log the result if needed
+        if (deletedCount == 0) {
+            System.out.println("No matching record found in temp_scheduler for deletion.");
+        }
     }
 }
