@@ -173,11 +173,23 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
                 }
 
                 // Cancel excess pending schedules
-                List<ReminderSchedulesDTO> toCancel = pendingSchedules.subList(0, expectedPendingCount);
+                List<ReminderSchedulesDTO> toCancel = pendingSchedules.subList(pendingSchedules.size() - expectedPendingCount, pendingSchedules.size());
                 toCancel.forEach(s -> {
                     s.setStatus(ScheduleStatus.CANCEL);
                     reminderServiceRepository.updateScheduleStatus(s);
+
+                    if (s.getScheduleDateAndTime().toLocalDate().isEqual(LocalDate.now())) {
+                        reminderServiceRepository.deleteFromTempScheduler(
+                                s.getReminderId(),
+                                s.getScheduleDateAndTime()
+                        );
+                    }
                 });
+
+                String dosageString = newReminderDTO.getDosageList().stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(","));
+                newReminderDTO.setDosageString(dosageString);
 
                 // Update reminder
                 newReminderDTO.setEndDate(newReminderDTO.getStartDate().plusDays(newNumberOfDays - 1));
@@ -214,12 +226,17 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
                     }
                 }
 
+                String dosageString = newReminderDTO.getDosageList().stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(","));
+                newReminderDTO.setDosageString(dosageString);
+
                 // Update reminder
                 newReminderDTO.setEndDate(newReminderDTO.getStartDate().plusDays(newNumberOfDays - 1));
                 reminderServiceRepository.updateReminder(newReminderDTO);
 
                 // Save new schedules
-                newSchedules.forEach(reminderServiceRepository::addSchedule);
+                newSchedules.forEach( s-> reminderServiceRepository.addSchedule(s));
 
                 return "Reminder partially updated (number of days increased).";
             }
