@@ -6,4 +6,6 @@ import java.io.IOException;
 
 public interface S3FileService {
     String uploadFile(MultipartFile file) throws IOException;
+
+    String generatePresignedUrl(String s3Key);
 }
