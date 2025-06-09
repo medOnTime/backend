@@ -24,7 +24,13 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         ServerHttpRequest request = exchange.getRequest();
 
         // Allow login/register requests without token
-        if (request.getURI().getPath().contains("/auth/login") || request.getURI().getPath().contains("/user/register")) {
+        if (
+                request.getURI().getPath().contains("/auth/login") ||
+                        request.getURI().getPath().contains("/user/register") ||
+                        request.getURI().getPath().contains("/pharmacy/add-pharmacy") ||
+                        request.getURI().getPath().contains("/pharmacy/get-all-pharmacies-for-selection") ||
+                        request.getURI().getPath().contains("/pharmacy/get-pharmacy-key")
+        ) {
             return chain.filter(exchange);
         }
 
@@ -70,6 +76,9 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         if (path.startsWith("/medicine") && role.equals("PATIENT")) return true;
         if (path.startsWith("/user") && (role.equals("ADMIN") || role.equals("PHARMACIST") || role.equals("PATIENT"))) return true;
         if (path.startsWith("/reminder") && role.equals("PATIENT")) return true;
+        if (path.startsWith("/pharmacy/set-approval") && role.equals("ADMIN")) return true;
+        if (path.startsWith("/pharmacy/set-rejection") && role.equals("ADMIN")) return true;
+        if (path.startsWith("/pharmacy/certificate-url") && role.equals("ADMIN")) return true;
         // Add more access rules here
         return false;
     }

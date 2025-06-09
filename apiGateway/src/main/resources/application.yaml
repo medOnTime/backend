@@ -22,6 +22,10 @@ spring:
           uri: http://localhost:8084
           predicates:
             - Path=/reminder/**
+        - id: pharmacy-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/pharmacy/**
 
 server:
   port: 8083
