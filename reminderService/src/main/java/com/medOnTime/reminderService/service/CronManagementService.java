@@ -20,9 +20,11 @@ public class CronManagementService {
 
     @Autowired
     private CronManagementRepository cronRepo;
+    @Autowired
+    private MqttPublisher mqttPublisher;
 
 //    @Scheduled(cron = "0 * * * * *")
-//    @Scheduled(cron = "0 0 0 * * *") // Every midnight
+    @Scheduled(cron = "0 0 0 * * *") // Every midnight
     @Transactional
     public void runDailySchedulerSync() {
 
@@ -59,6 +61,7 @@ public class CronManagementService {
 
         for (ReminderSchedulesDTO dto : dueReminders) {
             String userId = dto.getUserId();
+            mqttPublisher.publishReminderDto(userId, dto);
             logger.info("Due Reminder: {}", dto);
             // Add processing logic here (e.g. send push notification)
         }
