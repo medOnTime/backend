@@ -23,6 +23,9 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
     @Autowired
     private ReminderServiceRepository reminderServiceRepository;
 
+    @Autowired
+    private MedicineServiceClient medicineServiceClient;
+
     @Override
     @Transactional
     public String addReminder(ReminderDTO reminderDTO) throws Exception {
@@ -286,6 +289,19 @@ public class ReminderScheduleServiceImpl implements ReminderScheduleService{
 
         newSchedules.forEach(reminderServiceRepository::addSchedule);
         return "Reminder fully updated with new schedules.";
+    }
+
+    @Override
+    public String actionForSchedulers(ReminderSchedulesDTO schedulesDTO){
+
+        String message = "";
+
+        if (schedulesDTO.getStatus() != ScheduleStatus.CANCEL){
+            message = medicineServiceClient.updateInventory(schedulesDTO);
+        }
+
+        reminderServiceRepository.actionForSchedulers(schedulesDTO);
+        return message;
     }
 
     private boolean isEqualIgnoringCase(String s1, String s2) {

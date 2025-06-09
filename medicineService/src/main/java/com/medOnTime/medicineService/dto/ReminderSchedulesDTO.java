@@ -1,10 +1,10 @@
-package com.medOnTime.reminderService.dto;
+package com.medOnTime.medicineService.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @Builder

@@ -149,4 +149,32 @@ public class MedicineRepositoryImpl implements MedicineRepository{
         return rowsUpdated > 0 ? "Update successful" : "No records updated";
     }
 
+    @Override
+    public Integer getQuantityOfMedicineFromInventoryBuyUserAndMedId(Integer userId, Integer medicineId){
+        Query query = entityManager.createNativeQuery("SELECT quantity FROM medicine_inventry " +
+                "WHERE user_id = :userId AND medicine_id = :medicineId");
+
+        Object result = query.setParameter("userId", userId)
+                .setParameter("medicineId", medicineId)
+                .getSingleResult();
+
+        Integer quantity = (result != null) ? ((Number) result).intValue() : 0;
+
+        return quantity;
+
+    }
+
+    @Transactional
+    public String updateQuantityOfInventryByUserAndMedId(Integer userId, Integer medicineId, Integer newQuantity) {
+
+        Query query = entityManager.createNativeQuery("UPDATE medicine_inventry " +
+                "set quantity = :newQuantity WHERE user_id = :userId AND medicine_id = :medicineId");
+
+        query.setParameter("newQuantity", newQuantity);
+        query.setParameter("userId", userId);
+        query.setParameter("medicineId", medicineId);
+
+        int rowsUpdated = query.executeUpdate();
+        return rowsUpdated > 0 ? "Update successful" : "No records updated";
+    }
 }

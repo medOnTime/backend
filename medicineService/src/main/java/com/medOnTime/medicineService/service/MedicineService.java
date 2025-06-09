@@ -1,6 +1,7 @@
 package com.medOnTime.medicineService.service;
 
 import com.medOnTime.medicineService.dto.MedicineDTO;
+import com.medOnTime.medicineService.dto.ReminderSchedulesDTO;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,5 +17,7 @@ public interface MedicineService {
     List<HashMap<String,String>> getMedicineInventoryByUser(String userId);
 
     String updateInventory(HashMap<String,String> updatedData);
+
+    String updateInventoryAfterScheduleAction(ReminderSchedulesDTO schedulesDTO);
 
 }

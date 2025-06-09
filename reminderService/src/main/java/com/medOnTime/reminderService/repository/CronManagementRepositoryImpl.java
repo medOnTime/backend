@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Repository
 public class CronManagementRepositoryImpl implements CronManagementRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(CronManagementRepositoryImpl.class);;
+    private static final Logger logger = LoggerFactory.getLogger(CronManagementRepositoryImpl.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -98,7 +98,7 @@ public class CronManagementRepositoryImpl implements CronManagementRepository {
 
         LocalDateTime nextMinute = now.plusMinutes(1);
 
-        String sql = "SELECT r.user_id, r.reminder_id, ts.schedule_id, ts.scheduled_time, " +
+        String sql = "SELECT r.user_id, r.reminder_id, ts.schedule_id, ts.scheduled_time, r.medicine_id, " +
                 "r.medicine_name, ts.dosage, r.medicine_type, ts.status, ts.taken_time, r.strength " +
                 "FROM temp_scheduler ts " +
                 "JOIN reminders r ON ts.reminder_id = r.reminder_id " +
@@ -122,6 +122,7 @@ public class CronManagementRepositoryImpl implements CronManagementRepository {
                 .scheduleDateAndTime(t.get("scheduled_time") != null
                         ? ((Timestamp) t.get("scheduled_time")).toLocalDateTime()
                         : null)
+                .medicineId(t.get("medicine_id").toString())
                 .medicineName(t.get("medicine_name").toString())
                 .dosage(t.get("dosage") != null ? Integer.parseInt(t.get("dosage").toString()) : 0)
                 .medicineType(t.get("medicine_type").toString())

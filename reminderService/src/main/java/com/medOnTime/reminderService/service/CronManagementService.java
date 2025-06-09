@@ -65,6 +65,7 @@ public class CronManagementService {
             logger.info("Due Reminder: {}", dto);
             // Add processing logic here (e.g. send push notification)
         }
+        return;
     }
 
 }

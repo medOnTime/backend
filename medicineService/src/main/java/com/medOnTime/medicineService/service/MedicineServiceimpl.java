@@ -1,6 +1,7 @@
 package com.medOnTime.medicineService.service;
 
 import com.medOnTime.medicineService.dto.MedicineDTO;
+import com.medOnTime.medicineService.dto.ReminderSchedulesDTO;
 import com.medOnTime.medicineService.repo.MedicineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,5 +52,28 @@ public class MedicineServiceimpl implements MedicineService{
     @Override
     public String updateInventory(HashMap<String,String> updatedData){
         return medicineRepository.updateMedicineInventory(updatedData);
+    }
+
+    @Override
+    public String updateInventoryAfterScheduleAction(ReminderSchedulesDTO schedulesDTO){
+        Integer currentCount = medicineRepository.getQuantityOfMedicineFromInventoryBuyUserAndMedId(Integer.parseInt(schedulesDTO.getUserId()), Integer.parseInt(schedulesDTO.getMedicineId()));
+
+        Integer newCount = currentCount - schedulesDTO.getDosage();
+
+        String message;
+
+        if (newCount < 0) {
+            message = "Insufficient medicine quantity in inventory.";
+        } else {
+
+            message = medicineRepository.updateQuantityOfInventryByUserAndMedId(Integer.parseInt(schedulesDTO.getUserId()), Integer.parseInt(schedulesDTO.getMedicineId()),newCount);
+
+            if (newCount < 5) {
+                message = "Warning: Medicine inventory is running low (less than 5 units).";
+            }
+        }
+
+        return message;
+
     }
 }

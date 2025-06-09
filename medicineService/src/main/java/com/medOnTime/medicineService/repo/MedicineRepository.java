@@ -19,4 +19,8 @@ public interface MedicineRepository {
 
     String updateMedicineInventory(HashMap<String, String> updatedMedicineInventory);
 
+    Integer getQuantityOfMedicineFromInventoryBuyUserAndMedId(Integer userId, Integer medicineId);
+
+    String updateQuantityOfInventryByUserAndMedId(Integer userId, Integer medicineId, Integer newQuantity);
+
 }

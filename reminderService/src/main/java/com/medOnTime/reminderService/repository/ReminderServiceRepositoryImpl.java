@@ -5,6 +5,8 @@ import com.medOnTime.reminderService.dto.ReminderSchedulesDTO;
 import com.medOnTime.reminderService.dto.ScheduleStatus;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
+
+    private static final Logger logger = LoggerFactory.getLogger(ReminderServiceRepositoryImpl.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -325,15 +329,46 @@ public class ReminderServiceRepositoryImpl implements ReminderServiceRepository{
     @Override
     public void deleteFromTempScheduler(String reminderId, LocalDateTime scheduleTime) {
         int deletedCount = entityManager.createNativeQuery(
-                        "DELETE FROM temp_scheduler WHERE reminder_id = :reminderId AND scheduled_time = :scheduleTime"
+                        "DELETE FROM temp_scheduler WHERE reminder_id = :reminderId AND FORMAT(scheduled_time, 'yyyy-MM-dd HH:mm:ss') = :scheduledTimeStr"
                 )
                 .setParameter("reminderId", reminderId)
-                .setParameter("scheduleTime", Timestamp.valueOf(scheduleTime.withNano(0)))
+                .setParameter("scheduledTimeStr", scheduleTime)
                 .executeUpdate();
 
         // Optional: Log the result if needed
         if (deletedCount == 0) {
             System.out.println("No matching record found in temp_scheduler for deletion.");
         }
+    }
+
+    @Override
+    @Transactional
+    public void actionForSchedulers(ReminderSchedulesDTO schedulesDTO){
+
+        Query queryForReminderScheduler = entityManager.createNativeQuery("update reminder_scheduler set status = :status, taken_time = :dateTime " +
+                "WHERE reminder_id = :reminderId " +
+                "  AND FORMAT(scheduled_time, 'yyyy-MM-dd HH:mm:ss') = :scheduledTimeStr ");
+
+        queryForReminderScheduler.setParameter("status", schedulesDTO.getStatus().toString());
+        queryForReminderScheduler.setParameter("dateTime", LocalDateTime.now());
+        queryForReminderScheduler.setParameter("reminderId", schedulesDTO.getReminderId());
+        queryForReminderScheduler.setParameter("scheduledTimeStr", schedulesDTO.getScheduleDateAndTime());
+
+        Query queryForTempScheduler = entityManager.createNativeQuery("update temp_scheduler set status = :status, taken_time = :dateTime " +
+                "WHERE reminder_id = :reminderId " +
+                "  AND FORMAT(scheduled_time, 'yyyy-MM-dd HH:mm:ss') = :scheduledTimeStr ");
+
+        queryForTempScheduler.setParameter("status", schedulesDTO.getStatus().toString());
+        queryForTempScheduler.setParameter("dateTime", LocalDateTime.now());
+        queryForTempScheduler.setParameter("reminderId", schedulesDTO.getReminderId());
+        queryForTempScheduler.setParameter("scheduledTimeStr", schedulesDTO.getScheduleDateAndTime());
+
+        int updatedReminder = queryForReminderScheduler.executeUpdate();
+        int updatedTemp = queryForTempScheduler.executeUpdate();
+
+        if (updatedReminder == 0 || updatedTemp == 0) {
+            logger.warn("Update failed for one or both scheduler tables for reminderId: {}", schedulesDTO.getReminderId());
+        }
+
     }
 }

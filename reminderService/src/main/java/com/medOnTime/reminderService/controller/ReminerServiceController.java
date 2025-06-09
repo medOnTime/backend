@@ -40,6 +40,8 @@ public class ReminerServiceController {
         return reminderScheduleService.getRemindersByFilterForUpdate(userId);
     }
 
-
-
+    @PostMapping("/scheduleAction")
+    public String actionForSchedulers(@RequestBody ReminderSchedulesDTO schedulesDTO){
+        return reminderScheduleService.actionForSchedulers(schedulesDTO);
+    }
 }

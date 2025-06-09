@@ -18,4 +18,6 @@ public interface ReminderScheduleService {
 
     String updateReminder(ReminderDTO newReminderDTO) throws Exception;
 
+    String actionForSchedulers(ReminderSchedulesDTO schedulesDTO);
+
 }

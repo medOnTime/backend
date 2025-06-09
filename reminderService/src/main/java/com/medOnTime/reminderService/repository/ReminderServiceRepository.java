@@ -32,4 +32,6 @@ public interface ReminderServiceRepository {
 
     void deleteFromTempScheduler(String reminderId, LocalDateTime scheduleTime);
 
+    void actionForSchedulers(ReminderSchedulesDTO schedulesDTO);
+
 }

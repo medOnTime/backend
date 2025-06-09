@@ -1,6 +1,7 @@
 package com.medOnTime.medicineService.controller;
 
 import com.medOnTime.medicineService.dto.MedicineDTO;
+import com.medOnTime.medicineService.dto.ReminderSchedulesDTO;
 import com.medOnTime.medicineService.service.MedicineService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,4 +43,10 @@ public class medicineController {
     public String updateInventory(@RequestBody HashMap<String,String> updatedData){
         return medicineService.updateInventory(updatedData);
     }
+
+    @PostMapping("/updateInventoryAfterScheduleAction")
+    public String updateInventoryAfterScheduleAction(@RequestBody ReminderSchedulesDTO schedulesDTO){
+        return medicineService.updateInventoryAfterScheduleAction(schedulesDTO);
+    }
+
 }
