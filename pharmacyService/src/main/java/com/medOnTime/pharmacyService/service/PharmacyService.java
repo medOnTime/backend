@@ -22,4 +22,6 @@ public interface PharmacyService {
     String setRejection(int pharmacyId);
 
     String getLicensePresignedUrl(String licenseNumber);
+
+    String getPharmacySecretById(int pharmacyId);
 }

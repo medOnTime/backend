@@ -64,4 +64,9 @@ public class PharmacyController {
         }
     }
 
+    @GetMapping("/get-pharmacy-key")
+    public String getPharmacySecretKeyById(int pharmacyId) {
+        return pharmacyService.getPharmacySecretById(pharmacyId);
+    }
+
 }

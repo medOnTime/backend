@@ -28,4 +28,6 @@ public interface PharmacyRepository {
     void setRejection(int pharmacyId);
 
     String findLicenseFileKeyByLicenseNumber(String licenseNumber);
+
+    String getPharmacyKeyById(int pharmacyId);
 }

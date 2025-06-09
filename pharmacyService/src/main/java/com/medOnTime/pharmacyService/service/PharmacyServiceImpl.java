@@ -165,6 +165,12 @@ public class PharmacyServiceImpl implements PharmacyService {
         return s3FileService.generatePresignedUrl(s3Key);
     }
 
+    @Override
+    public String getPharmacySecretById(int pharmacyId) {
+        return pharmacyRepository.getPharmacyKeyById(pharmacyId);
+
+    }
+
     private String generateSecretKey() {
         try {
             byte[] bytes = new byte[32];
@@ -175,6 +181,9 @@ public class PharmacyServiceImpl implements PharmacyService {
             throw new RuntimeException("SecureRandom algorithm not available", e);
         }
     }
+
+
+
 
 
 

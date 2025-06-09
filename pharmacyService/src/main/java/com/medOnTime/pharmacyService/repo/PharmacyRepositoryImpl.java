@@ -106,6 +106,14 @@ public class PharmacyRepositoryImpl implements PharmacyRepository {
         return license;
     }
 
+    @Override
+    public String getPharmacyKeyById(int pharmacyId) {
+        Query query = entityManager.createNativeQuery("SELECT secret_key FROM pharmacy WHERE pharmacy_id = :pharmacyId");
+        query.setParameter("pharmacyId", pharmacyId);
+        String secretKey = (String) query.getSingleResult();
+        return secretKey;
+    }
+
 
     @Override
     @Transactional
