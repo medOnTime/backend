@@ -12,5 +12,6 @@ public class UserDTO {
     private String phoneNumber;
     private Roles roles; // At least one of: PATIENT, CARETAKER, PHARMACIST
     private String pharmacyId; // Required only if role contains PHARMACIST
+    private String secretKey;
 
 }
