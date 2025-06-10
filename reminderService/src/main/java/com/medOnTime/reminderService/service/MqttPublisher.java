@@ -5,17 +5,19 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.medOnTime.reminderService.dto.ReminderSchedulesDTO;
 import org.eclipse.paho.client.mqttv3.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-@Service
 public class MqttPublisher {
 
-    private final String brokerUrl = "tcp://localhost:1883"; // Or use ws:// for WebSocket
+    private final String brokerUrl;
     private final String clientId = "spring-reminder-publisher";
     private final MqttClient mqttClient;
     private final ObjectMapper objectMapper;
 
-    public MqttPublisher() throws MqttException {
+    public MqttPublisher(String brokerUrl) throws MqttException {
+        this.brokerUrl = brokerUrl;
+
         mqttClient = new MqttClient(brokerUrl, clientId);
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
@@ -40,3 +42,4 @@ public class MqttPublisher {
         }
     }
 }
+

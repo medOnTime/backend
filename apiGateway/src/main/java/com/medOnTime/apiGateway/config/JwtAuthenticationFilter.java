@@ -29,7 +29,11 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                         request.getURI().getPath().contains("/user/register") ||
                         request.getURI().getPath().contains("/pharmacy/add-pharmacy") ||
                         request.getURI().getPath().contains("/pharmacy/get-all-pharmacies-for-selection") ||
-                        request.getURI().getPath().contains("/pharmacy/get-pharmacy-key")
+                        request.getURI().getPath().contains("/pharmacy/get-pharmacy-key") ||
+                        request.getURI().getPath().contains("/pharmacy/get-all-pharmacies") ||
+                        request.getURI().getPath().contains("/pharmacy/set-approval") ||
+                        request.getURI().getPath().contains("/pharmacy/set-rejection") ||
+                        request.getURI().getPath().contains("/pharmacy/certificate-url/{licenseNumber}")
         ) {
             return chain.filter(exchange);
         }
