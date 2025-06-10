@@ -1,6 +1,7 @@
 package com.medOnTime.reminderService.service;
 
 import com.medOnTime.reminderService.dto.ReminderSchedulesDTO;
+import com.medOnTime.reminderService.dto.ScheduleStatus;
 import com.medOnTime.reminderService.repository.CronManagementRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -66,6 +67,29 @@ public class CronManagementService {
             // Add processing logic here (e.g. send push notification)
         }
         return;
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void afterOneHourChangeScheduleStatusToMissed() {
+
+        LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
+        LocalDateTime oneHourAgo = now.minusHours(1);
+
+        List<ReminderSchedulesDTO> schedulesDTOList = cronRepo.getSchedulesNotUpdateAsTakenAfterOneHour(oneHourAgo);
+
+        if (schedulesDTOList.isEmpty()) {
+            logger.info("No missed reminders");
+            return;
+        }
+
+        for (ReminderSchedulesDTO schedulesDTO : schedulesDTOList){
+            schedulesDTO.setStatus(ScheduleStatus.MISSED);
+            cronRepo.updateMissedSchedulesAsMissed(schedulesDTO);
+        }
+
+        logger.info("missed schedules update complete");
+
     }
 
 }

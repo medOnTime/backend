@@ -4,6 +4,7 @@ import com.medOnTime.reminderService.dto.ReminderSchedulesDTO;
 import com.medOnTime.reminderService.dto.ScheduleStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -132,6 +134,81 @@ public class CronManagementRepositoryImpl implements CronManagementRepository {
                         : null)
                 .medicineStrength(t.get("strength") != null ? t.get("strength").toString() : null)
                 .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ReminderSchedulesDTO> getSchedulesNotUpdateAsTakenAfterOneHour(LocalDateTime dateTime){
+        String sql = "SELECT schedule_id, reminder_id, scheduled_time, status, taken_time, dosage " +
+                "FROM temp_scheduler " +
+                "WHERE scheduled_time  < :dateTime and status = 'PENDING'";
+
+        List<Tuple> tuples = entityManager.createNativeQuery(sql, Tuple.class)
+                .setParameter("dateTime", dateTime)
+                .getResultList();
+
+        List<ReminderSchedulesDTO> result = new ArrayList<>();
+
+        if (tuples == null || tuples.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        for (Tuple tuple : tuples) {
+            ReminderSchedulesDTO dto = ReminderSchedulesDTO.builder()
+                    .scheduleId(tuple.get("schedule_id").toString())
+                    .reminderId(tuple.get("reminder_id").toString())
+                    .scheduleDateAndTime(
+                            tuple.get("scheduled_time") != null
+                                    ? ((Timestamp) tuple.get("scheduled_time")).toLocalDateTime()
+                                    : null
+                    )
+                    .status(
+                            tuple.get("status") != null
+                                    ? ScheduleStatus.valueOf(tuple.get("status").toString())
+                                    : null
+                    )
+                    .takenDateAndTime(
+                            tuple.get("taken_time") != null
+                                    ? ((Timestamp) tuple.get("taken_time")).toLocalDateTime()
+                                    : null
+                    )
+                    .dosage(tuple.get("dosage") != null ? Integer.parseInt(tuple.get("dosage").toString()) : null)
+                    .build();
+
+            result.add(dto);
+        }
+
+        logger.info("Complete getting missed schedules: " + LocalDate.now() + " with size of: " + result.size());
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void updateMissedSchedulesAsMissed(ReminderSchedulesDTO schedulesDTO){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedScheduledTime = schedulesDTO.getScheduleDateAndTime().format(formatter);
+
+        Query queryForReminderScheduler = entityManager.createNativeQuery(
+                "UPDATE reminder_scheduler SET status = :status " +
+                        "WHERE reminder_id = :reminderId " +
+                        "AND FORMAT(scheduled_time, 'yyyy-MM-dd HH:mm:ss') = :scheduledTimeStr"
+        );
+        queryForReminderScheduler.setParameter("status", schedulesDTO.getStatus().toString());
+        queryForReminderScheduler.setParameter("reminderId", schedulesDTO.getReminderId());
+        queryForReminderScheduler.setParameter("scheduledTimeStr", formattedScheduledTime);
+
+        Query queryForTempScheduler = entityManager.createNativeQuery(
+                "UPDATE temp_scheduler SET status = :status " +
+                        "WHERE reminder_id = :reminderId " +
+                        "AND FORMAT(scheduled_time, 'yyyy-MM-dd HH:mm:ss') = :scheduledTimeStr"
+        );
+        queryForTempScheduler.setParameter("status", schedulesDTO.getStatus().toString());
+        queryForTempScheduler.setParameter("reminderId", schedulesDTO.getReminderId());
+        queryForTempScheduler.setParameter("scheduledTimeStr", formattedScheduledTime);
+
+        int updatedReminder = queryForReminderScheduler.executeUpdate();
+        int updatedTemp = queryForTempScheduler.executeUpdate();
+
     }
 
 

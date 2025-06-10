@@ -16,4 +16,8 @@ public interface CronManagementRepository {
 
     List<ReminderSchedulesDTO> findDueReminders(LocalDateTime now);
 
+    List<ReminderSchedulesDTO> getSchedulesNotUpdateAsTakenAfterOneHour(LocalDateTime dateTime);
+
+    void updateMissedSchedulesAsMissed(ReminderSchedulesDTO schedulesDTO);
+
 }
