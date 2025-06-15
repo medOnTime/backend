@@ -83,6 +83,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         if (path.startsWith("/pharmacy/set-approval") && role.equals("ADMIN")) return true;
         if (path.startsWith("/pharmacy/set-rejection") && role.equals("ADMIN")) return true;
         if (path.startsWith("/pharmacy/certificate-url") && role.equals("ADMIN")) return true;
+        if (path.startsWith("/chatbot") && (role.equals("ADMIN") || role.equals("PHARMACIST") || role.equals("PATIENT"))) return true;
         // Add more access rules here
         return false;
     }
