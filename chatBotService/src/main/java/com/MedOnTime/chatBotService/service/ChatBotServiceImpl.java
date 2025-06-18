@@ -4,6 +4,12 @@ import com.MedOnTime.chatBotService.dto.ChatParam;
 import com.MedOnTime.chatBotService.dto.IntentType;
 import com.MedOnTime.chatBotService.repository.ChatBotServiceRepository;
 import com.google.gson.Gson;
+import io.pinecone.clients.Index;
+import io.pinecone.configs.PineconeConfig;
+import io.pinecone.configs.PineconeConnection;
+import org.openapitools.db_data.client.ApiException;
+import org.openapitools.db_data.client.model.Hit;
+import org.openapitools.db_data.client.model.SearchRecordsResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -11,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +40,35 @@ public class ChatBotServiceImpl implements ChatBotService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
+    @Autowired
+    private Index medontimefaqindex;
+
     @Override
-    public String handleUserPrompt(String prompt, Integer userId) {
+    public String handleUserPrompt(String prompt, Integer userId) throws ApiException {
+
+        //first check whether is it faq type question
+        List<String> fields = new ArrayList<>();
+        fields.add("ID");
+        fields.add("text");
+
+        SearchRecordsResponse searchRecordsResponse = medontimefaqindex.searchRecordsByText(prompt, "__default__", fields, 5, null,null);
+
+        double scoreThreshold = 0.50;
+
+        // Get the top hit
+        List<Hit> hits = searchRecordsResponse.getResult().getHits();
+
+        if (hits != null && !hits.isEmpty()) {
+            Hit topHit = hits.get(0);
+            if (topHit.getScore() != null && topHit.getScore() >= scoreThreshold) {
+                // This is a relevant FAQ match → generate a natural response
+                Object data = topHit.getFields(); // this contains your chunk_text, category, etc.
+                return generateNaturalResponseForFAQ(prompt, data);
+            } else {
+                System.out.println("No relevant FAQ found (below threshold).");
+            }
+        }
+
         IntentType intent = intentDetecticeService.detectIntent(prompt);
 
         switch (intent) {
@@ -168,5 +202,23 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         return callGemini(formattedPrompt);
     }
+
+    private String generateNaturalResponseForFAQ(String originalPrompt, Object data) {
+        String today = LocalDate.now().toString();
+
+        String formattedPrompt = """
+        You are a helpful healthcare assistant AI. Today is %s.
+
+        The user asked the following question: "%s"
+
+        Here is the most relevant information retrieved from the FAQ or medical content database:
+        %s
+
+        Based on the information, give a clear, concise, and helpful response.
+        """.formatted(today, originalPrompt, new Gson().toJson(data));
+
+        return callGemini(formattedPrompt); // This can use Gemini, GPT-4, Claude, etc.
+    }
+
 
 }

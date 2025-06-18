@@ -2,6 +2,7 @@ package com.MedOnTime.chatBotService.controller;
 
 import com.MedOnTime.chatBotService.service.ChatBotService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.openapitools.db_data.client.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ public class ChatBotServiceController {
     private ChatBotService chatBotService;
 
     @PostMapping("chat")
-    public String chatWithChatBot(HttpServletRequest httpServletRequest, @RequestBody String prompt){
+    public String chatWithChatBot(HttpServletRequest httpServletRequest, @RequestBody String prompt) throws ApiException {
         String userId = httpServletRequest.getHeader("X-User-Id");
         return chatBotService.handleUserPrompt(prompt, Integer.parseInt(userId));
     }
